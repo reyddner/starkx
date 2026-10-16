@@ -19,6 +19,7 @@ import {
 } from "@structural/takeoff";
 import {
   buildProjectOutputs,
+  type FootingDesignBase,
   type ProjectOutputsSource,
 } from "../store/buildProjectOutputs";
 import type { ColumnRecord } from "../store/columns";
@@ -63,6 +64,8 @@ export interface MemorialStoreSnapshot {
   structural: StructuralDesignResult | null;
   blockResult: BlockDesignResult | null;
   footingResult: FootingDesignResult | null;
+  /** Parâmetros da sapata sem cargas — dimensiona a sapata de cada pilar. */
+  footingDesignBase?: FootingDesignBase | null;
   caissonResult: CaissonDesignResult | null;
   raftResult: RaftDesignResult | null;
   footingShape: string;
@@ -109,6 +112,7 @@ function toOutputsSource(s: MemorialStoreSnapshot): ProjectOutputsSource {
     blockResult: s.blockResult,
     structural: s.structural,
     footingResult: s.footingResult,
+    footingDesignBase: s.footingDesignBase ?? null,
     fck_MPa: s.fck_MPa ?? null,
     fyk_MPa: s.fyk_MPa ?? 500,
     pileTypeId: s.pileTypeId,

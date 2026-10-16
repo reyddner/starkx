@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useProjectStore } from '../../store/projectStore'
+import { footingDesignBaseFrom, useProjectStore } from '../../store/projectStore'
 import { buildMemorialFromStore } from '../../memorial/fromStore'
 import { FlowNavButtons } from '../FlowNavButtons'
 import memorialFontUrl from '@memorial/fonts/Roboto-Regular.ttf?url'
@@ -9,6 +9,7 @@ export function StepMemorial() {
   const kind = s.foundationKind
   const isOther = kind === 'footing' || kind === 'caisson' || kind === 'raft'
   const { doc, markdown, html } = buildMemorialFromStore({
+    footingDesignBase: footingDesignBaseFrom(s),
     projectName: s.projectName,
     projectCode: s.projectCode,
     client: s.client,

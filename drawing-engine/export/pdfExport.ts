@@ -1,5 +1,6 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import type { A4Sheet, DrawingProjectBook } from "../core/types";
+import { TEXT_METRICS } from "../core/textFit";
 
 const MM_TO_PT = 72 / 25.4; // ~2.834645669
 const SHEET_WIDTH_PT = 297 * MM_TO_PT; // ~841.89 pt
@@ -28,6 +29,7 @@ function hexToRgb(hex?: string) {
  */
 function sanitizeText(raw: string): string {
   return raw
+    .replace(/…/g, "...")
     .replace(/—/g, " - ")
     .replace(/–/g, "-")
     .replace(/•/g, "*")
@@ -130,23 +132,18 @@ async function renderSheetToPdfPage(
       const text = sanitizeText(p.text);
       if (!text) continue;
 
-      const sizePt = Math.max(5, p.fontSize * MM_TO_PT);
+      const sizePt = p.fontSize * MM_TO_PT;
       const textWidth = font.widthOfTextAtSize(text, sizePt);
-      const textHeight = font.heightAtSize(sizePt);
 
       let x = p.x * MM_TO_PT;
-      let y = (210 - p.y) * MM_TO_PT - textHeight * 0.8; // alinhamento top default
+      // Linha de base pelas métricas da fonte — a mesma regra do SVG (TEXT_METRICS).
+      const baseline_mm = p.y + TEXT_METRICS.baselineOffset(p.baseline) * p.fontSize;
+      const y = (210 - baseline_mm) * MM_TO_PT;
 
       if (p.align === "center") {
         x -= textWidth / 2;
       } else if (p.align === "right") {
         x -= textWidth;
-      }
-
-      if (p.baseline === "middle") {
-        y += textHeight * 0.35;
-      } else if (p.baseline === "bottom") {
-        y += textHeight * 0.75;
       }
 
       const color = hexToRgb(p.color) ?? rgb(0, 0, 0);

@@ -37,6 +37,8 @@ export interface DrawingBookInput {
     pileShaftLength_m?: number;
     ref: string;
     takeoff?: ElementTakeoff;
+    /** Carga vertical do pilar (kN), como informada nas Cargas. */
+    columnLoad_kN?: number;
   }>;
   piles?: DrawingBookPileInput[];
   footings?: Array<{
@@ -45,6 +47,8 @@ export interface DrawingBookInput {
     pierLength_m?: number;
     ref: string;
     takeoff?: ElementTakeoff;
+    /** Carga vertical do pilar (kN), como informada nas Cargas. */
+    columnLoad_kN?: number;
   }>;
   takeoffSummary?: ProjectTakeoffSummary;
   generalNotes?: string[];
@@ -72,7 +76,7 @@ export function buildProjectDrawingBook(input: DrawingBookInput): DrawingProject
       elementRef: b.ref,
       kind: `Bloco ${b.result.pileCount}E (Ø${Math.round(b.pileDiameter_m * 100)}cm)`,
       dimensions: `${Math.round(b.result.cap.width_m * 100)}×${Math.round(b.result.cap.length_m * 100)}×${Math.round(b.result.cap.thickness_m * 100)}`,
-      load_kN: b.result.groupPadm_kN ?? 0,
+      load_kN: b.columnLoad_kN ?? 0,
       sheetRef: `Prancha ${String(sheetCursor).padStart(2, "0")}`,
     });
     sheetCursor++;
@@ -94,7 +98,7 @@ export function buildProjectDrawingBook(input: DrawingBookInput): DrawingProject
       elementRef: f.ref,
       kind: "Sapata Isolada",
       dimensions: `${Math.round(f.result.B_m * 100)}×${Math.round(f.result.L_m * 100)}×${Math.round(f.result.thickness_m * 100)}`,
-      load_kN: f.result.Nd_kN ?? 0,
+      load_kN: f.columnLoad_kN ?? f.result.Nk_kN,
       sheetRef: `Prancha ${String(sheetCursor).padStart(2, "0")}`,
     });
     sheetCursor++;

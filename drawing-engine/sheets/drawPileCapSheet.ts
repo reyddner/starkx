@@ -6,13 +6,38 @@ import type {
 import { createLinearDimension } from "../core/dimensionHelper";
 import { createModelToSheetTransform, selectBestScale } from "../core/autoScale";
 import { sheetRectFromModel } from "../core/rectHelper";
-import { fitTextToWidth } from "../core/textFit";
+import { estimateTextWidthMm, fitTextToWidth, MIN_FONT_MM } from "../core/textFit";
 import { drawRebarShape } from "../rebars/rebarShapeDrafter";
 import { extractRebarShapes } from "../rebars/rebarExtractor";
 import { drawRebarTable } from "./drawRebarTable";
 import { drawTitleBlock } from "./drawTitleBlock";
 import { drawSheetBorders } from "./sheetBorders";
 import type { BlockDesignResult } from "../../block-engine/types";
+
+type CapPile = BlockDesignResult["piles"][number];
+
+/** Duas estacas vizinhas para cotar o espaçamento: mesma fila (horizontal) ou mesma coluna. */
+function pileSpacingPair(piles: CapPile[]): [CapPile, CapPile, boolean] | null {
+  let best: [CapPile, CapPile, boolean] | null = null;
+  let bestD = Infinity;
+  for (const horizontal of [true, false]) {
+    for (let i = 0; i < piles.length; i++) {
+      for (let j = i + 1; j < piles.length; j++) {
+        const a = piles[i]!.position;
+        const b = piles[j]!.position;
+        const along = horizontal ? Math.abs(b.x_m - a.x_m) : Math.abs(b.y_m - a.y_m);
+        const across = horizontal ? Math.abs(b.y_m - a.y_m) : Math.abs(b.x_m - a.x_m);
+        if (across < 1e-3 && along > 0.05 && along < bestD) {
+          bestD = along;
+          const [p, q] = (horizontal ? a.x_m <= b.x_m : a.y_m >= b.y_m) ? [piles[i]!, piles[j]!] : [piles[j]!, piles[i]!];
+          best = [p, q, horizontal];
+        }
+      }
+    }
+    if (best) return best;
+  }
+  return best;
+}
 import type { ElementTakeoff } from "../../structural-engine/takeoff/types";
 
 export interface PileCapSheetInput {
@@ -48,13 +73,12 @@ export function drawPileCapSheet(input: PileCapSheetInput): A4Sheet {
   //   planta/corte  x=22..116  |  desdobramento x=118..182  |  tabela/carimbo x=185..287
   // -------------------------------------------------------------
   const planBox = { x: 22, y: 12, width: 94, height: 90 };
-  const planScale = selectBestScale(
-    { width_m: cap.width_m, length_m: cap.length_m },
-    { x: planBox.x, y: planBox.y, width: planBox.width, height: planBox.height - 12 },
-  );
+  // Área do desenho já descontando título, cotas e rótulos do corte (A … A).
+  const planDraw = { x: planBox.x + 12, y: planBox.y + 17, width: planBox.width - 36, height: planBox.height - 28 };
+  const planScale = selectBestScale({ width_m: cap.width_m, length_m: cap.length_m }, planDraw, 0);
   const planTransform = createModelToSheetTransform(
     { width_m: cap.width_m, length_m: cap.length_m },
-    { x: planBox.x, y: planBox.y + 6, width: planBox.width, height: planBox.height - 12 },
+    planDraw,
     planScale,
   );
 
@@ -174,7 +198,8 @@ export function drawPileCapSheet(input: PileCapSheetInput): A4Sheet {
     },
   );
 
-  // Cotas na Planta:
+  // Cotas na Planta (a linha de corte entra antes delas, para a máscara da cota cobri-la):
+  const planDimsStart = primitives.length;
   // 1. Cota de largura total Lx (horizontal abaixo do bloco)
   primitives.push(
     ...createLinearDimension({
@@ -197,34 +222,50 @@ export function drawPileCapSheet(input: PileCapSheetInput): A4Sheet {
     }),
   );
 
-  // 3. Cota entre eixos de estacas (se houver mais de 1 estaca com espaçamento > 0)
-  if (piles.length >= 2) {
-    const p1 = piles[0];
-    const p2 = piles[1];
+  // 3. Cota entre eixos de estacas, fora do bloco: na borda de cima (mesma fila)
+  //    ou, se só houver uma coluna de estacas, na borda esquerda.
+  let leftReserve = 0;
+  const pair = pileSpacingPair(piles);
+  if (pair) {
+    const [p1, p2, horizontal] = pair;
     const pt1 = planTransform.toSheetPoint({ x: p1.position.x_m, y: p1.position.y_m });
     const pt2 = planTransform.toSheetPoint({ x: p2.position.x_m, y: p2.position.y_m });
     const dist_m = Math.hypot(p2.position.x_m - p1.position.x_m, p2.position.y_m - p1.position.y_m);
-    if (dist_m > 0.05) {
-      primitives.push(
-        ...createLinearDimension({
-          start: pt1,
-          end: pt2,
-          offset_mm: -6.0,
-          measurement_cm: Math.round(dist_m * 100),
-          orientation: Math.abs(pt2.y - pt1.y) < Math.abs(pt2.x - pt1.x) ? "horizontal" : "vertical",
-          fontSize: 3.6,
-        }),
-      );
-    }
+    const label = String(Math.round(dist_m * 100));
+    primitives.push(
+      ...createLinearDimension(
+        horizontal
+          ? {
+              start: { x: pt1.x, y: blk.top },
+              end: { x: pt2.x, y: blk.top },
+              offset_mm: -5,
+              text: label,
+              orientation: "horizontal",
+              fontSize: 3.6,
+            }
+          : {
+              start: { x: blk.left, y: pt1.y },
+              end: { x: blk.left, y: pt2.y },
+              offset_mm: -5,
+              text: label,
+              orientation: "vertical",
+              fontSize: 3.6,
+            },
+      ),
+    );
+    if (!horizontal) leftReserve = 5 + 1 + estimateTextWidthMm(label, 3.6) + 2;
   }
 
-  // Linha de corte A-A tracejada na planta
+  // Linha de corte A-A: rótulos além das cotas laterais.
   const cutLineY = pierCenter.y;
-  primitives.push({
+  const lyLabelW = estimateTextWidthMm(String(Math.round(cap.length_m * 100)), 3.8);
+  const cutLeftX = blk.left - 6 - leftReserve;
+  const cutRightX = blk.right + 5.5 + 1 + lyLabelW + 5;
+  primitives.splice(planDimsStart, 0, {
     type: "line",
-    x1: blk.left - 4,
+    x1: cutLeftX + 3,
     y1: cutLineY,
-    x2: blk.right + 4,
+    x2: cutRightX - 3,
     y2: cutLineY,
     strokeWidth: 0.4,
     strokeColor: "#7A5820",
@@ -234,9 +275,9 @@ export function drawPileCapSheet(input: PileCapSheetInput): A4Sheet {
     {
       type: "text",
       text: "A",
-      x: blk.left - 6,
+      x: cutLeftX,
       y: cutLineY,
-      fontSize: 6.5,
+      fontSize: 6.0,
       align: "center",
       baseline: "middle",
       color: "#7A5820",
@@ -245,9 +286,9 @@ export function drawPileCapSheet(input: PileCapSheetInput): A4Sheet {
     {
       type: "text",
       text: "A",
-      x: blk.right + 6,
+      x: cutRightX,
       y: cutLineY,
-      fontSize: 6.5,
+      fontSize: 6.0,
       align: "center",
       baseline: "middle",
       color: "#7A5820",
@@ -265,9 +306,12 @@ export function drawPileCapSheet(input: PileCapSheetInput): A4Sheet {
   const pierStickUp = 0.25;
 
   const totalSecModelH = capH + leanH + pileEmbed + pierStickUp + pileShaftBelow;
+  // Reserva: cota da altura à esquerda, cota da largura acima do arranque, nota embaixo.
+  const secDraw = { x: secBox.x + 14, y: secBox.y + 17, width: secBox.width - 18, height: secBox.height - 24 };
   const secScale = selectBestScale(
-    { width_m: cap.width_m, length_m: totalSecModelH },
-    { x: secBox.x, y: secBox.y, width: secBox.width, height: secBox.height - 12 },
+    { width_m: cap.width_m + 0.1, length_m: totalSecModelH },
+    secDraw,
+    0,
   );
 
   const secTransform = createModelToSheetTransform(
@@ -277,7 +321,7 @@ export function drawPileCapSheet(input: PileCapSheetInput): A4Sheet {
       // O corte vai de -(magro + fuste) até (topo do bloco + arranque).
       centerY_m: (capH + pierStickUp - leanH - pileShaftBelow) / 2,
     },
-    { x: secBox.x, y: secBox.y + 6, width: secBox.width, height: secBox.height - 12 },
+    secDraw,
     secScale,
   );
 
@@ -339,29 +383,6 @@ export function drawPileCapSheet(input: PileCapSheetInput): A4Sheet {
     strokeColor: "#666666",
     fillColor: "#eceff1",
   });
-  // Anotação concreto magro — à direita da faixa, sem invadir a coluna central
-  const magroX = Math.min(secLean.right + 2, secBox.x + secBox.width - 14);
-  primitives.push({
-    type: "text",
-    text: "MAGRO",
-    x: magroX,
-    y: (secLean.top + secLean.bottom) / 2,
-    fontSize: 3.2,
-    align: "left",
-    baseline: "middle",
-    color: "#666666",
-  });
-  primitives.push({
-    type: "text",
-    text: `e=${Math.round(leanH * 100)}cm`,
-    x: magroX,
-    y: (secLean.top + secLean.bottom) / 2 + 3.2,
-    fontSize: 3.0,
-    align: "left",
-    baseline: "middle",
-    color: "#888888",
-  });
-
   // Pilar de arranque no corte
   const secPier = sheetRectFromModel(
     secTransform.toSheetPoint,
@@ -476,41 +497,38 @@ export function drawPileCapSheet(input: PileCapSheetInput): A4Sheet {
     },
   );
 
-  // Cotas no Corte — afastadas do contorno para não cobrir armadura
+  // Cotas no Corte — altura à esquerda; largura acima do arranque (embaixo cruzaria as estacas).
   primitives.push(
     ...createLinearDimension({
       start: { x: secBlk.left, y: secBlk.top },
       end: { x: secBlk.left, y: secBlk.bottom },
-      offset_mm: -10.0,
+      offset_mm: -6.0,
       measurement_cm: Math.round(capH * 100),
       orientation: "vertical",
       fontSize: 3.8,
     }),
   );
-
-  const embedTop = secTransform.toSheetPoint({ x: -cap.width_m / 2, y: pileEmbed });
-  const embedBot = secTransform.toSheetPoint({ x: -cap.width_m / 2, y: 0 });
   primitives.push(
     ...createLinearDimension({
-      start: { x: secBlk.left, y: embedTop.y },
-      end: { x: secBlk.left, y: embedBot.y },
-      offset_mm: -16.0,
-      measurement_cm: 10,
-      orientation: "vertical",
-      fontSize: 3.5,
-    }),
-  );
-
-  primitives.push(
-    ...createLinearDimension({
-      start: { x: secBlk.left, y: secLean.bottom },
-      end: { x: secBlk.right, y: secLean.bottom },
-      offset_mm: 8.0,
+      start: { x: secBlk.left, y: secBlk.top },
+      end: { x: secBlk.right, y: secBlk.top },
+      offset_mm: -(secPier.height + 3),
       measurement_cm: Math.round(cap.width_m * 100),
       orientation: "horizontal",
       fontSize: 3.8,
     }),
   );
+  const secNote = `Magro e=${Math.round(leanH * 100)} cm · estacas embutidas ${Math.round(pileEmbed * 100)} cm no bloco`;
+  primitives.push({
+    type: "text",
+    text: fitTextToWidth(secNote, MIN_FONT_MM, secBox.width - 4, false),
+    x: secBox.x + secBox.width / 2,
+    y: secBox.y + secBox.height - 3,
+    fontSize: MIN_FONT_MM,
+    align: "center",
+    baseline: "middle",
+    color: "#555555",
+  });
 
   // -------------------------------------------------------------
   // 4. COLUNA CENTRAL: DESDOBRAMENTO (x: 118 a 182)

@@ -1,4 +1,5 @@
 import type { DrawingPrimitive, Point2D, TextPrimitive } from "./types";
+import { estimateTextWidthMm } from "./textFit";
 
 export interface LinearDimensionOptions {
   x1?: number;
@@ -121,14 +122,18 @@ export function createLinearDimension(opts: LinearDimensionOptions): DrawingPrim
 
   const midX = (cx1 + cx2) / 2;
   const midY = (cy1 + cy2) / 2;
-  const textGap = Math.max(2.4, fontSize * 0.6);
+  const textW = estimateTextWidthMm(text, fontSize, true);
+  // Texto sempre na horizontal: na cota vertical ele vai ao lado da linha
+  // (centrado sobre ela invadiria o desenho e os rótulos vizinhos).
+  const sideways = opts.orientation === "vertical";
+  const textGap = sideways ? textW / 2 + 1.0 : Math.max(2.4, fontSize * 0.6);
   const textMidX = midX + nx * textGap * dir;
   const textMidY = midY + ny * textGap * dir;
 
-  const textHalf = Math.max(2.5, text.length * fontSize * 0.28);
-  const gap = Math.min(textHalf, len * 0.4);
+  const textHalf = Math.max(2.5, textW / 2 + 0.6);
+  const gap = sideways ? 0 : Math.min(textHalf, len * 0.4);
 
-  if (len > gap * 2 + 1.5) {
+  if (gap > 0 && len > gap * 2 + 1.5) {
     primitives.push(
       {
         type: "line",
@@ -185,7 +190,7 @@ export function createLinearDimension(opts: LinearDimensionOptions): DrawingPrim
   );
 
   if (useMask) {
-    const maskW = Math.max(4, text.length * fontSize * 0.55 + 1.5);
+    const maskW = textW + 1.2;
     const maskH = fontSize + 1.2;
     primitives.push({
       type: "rect",

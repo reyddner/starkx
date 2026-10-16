@@ -1,4 +1,5 @@
 import type { A4Sheet } from "../core/types";
+import { TEXT_METRICS } from "../core/textFit";
 
 function dashAttr(pattern?: number[]): string {
   if (!pattern || pattern.length === 0) return "";
@@ -42,7 +43,8 @@ export function exportSheetToSvg(sheet: A4Sheet): string {
     } else if (p.type === "text") {
       const color = p.color ?? "#000000";
       const anchor = p.align === "center" ? "middle" : p.align === "right" ? "end" : "start";
-      const dominantBaseline = p.baseline === "middle" ? "central" : p.baseline === "bottom" ? "text-after-edge" : "text-before-edge";
+      // Linha de base explícita (a mesma do PDF); dominant-baseline varia entre navegadores.
+      const baselineY = p.y + TEXT_METRICS.baselineOffset(p.baseline) * p.fontSize;
       const weight = p.bold ? 'font-weight="bold"' : "";
       const escaped = p.text
         .replace(/&/g, "&amp;")
@@ -52,7 +54,7 @@ export function exportSheetToSvg(sheet: A4Sheet): string {
 
       const fontSize_mm = p.fontSize.toFixed(3);
       elements.push(
-        `<text x="${p.x}" y="${p.y}" font-family="Arial, Helvetica, sans-serif" font-size="${fontSize_mm}" fill="${color}" text-anchor="${anchor}" dominant-baseline="${dominantBaseline}" ${weight}>${escaped}</text>`,
+        `<text x="${p.x}" y="${baselineY.toFixed(3)}" font-family="Helvetica, Arial, sans-serif" font-size="${fontSize_mm}" fill="${color}" text-anchor="${anchor}" ${weight}>${escaped}</text>`,
       );
     } else if (p.type === "image") {
       elements.push(

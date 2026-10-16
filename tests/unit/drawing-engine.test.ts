@@ -290,8 +290,8 @@ describe("Drawing Engine — A4 Technical Sheets & Rebar Detailing", () => {
     expect(sheet.width_mm).toBe(297);
     expect(sheet.height_mm).toBe(210);
     const texts = sheet.primitives.filter((p) => p.type === "text").map((t: any) => t.text);
-    expect(texts.some((t) => t.includes("PLANTA BAIXA"))).toBe(true);
-    expect(texts.some((t) => t.includes("CORTE VERTICAL"))).toBe(true);
+    expect(texts.some((t) => t.startsWith("PLANTA ("))).toBe(true);
+    expect(texts.some((t) => t.startsWith("CORTE A-A ("))).toBe(true);
     expect(texts.some((t) => t.includes("DESDOBRAMENTO"))).toBe(true);
   });
 
@@ -778,12 +778,12 @@ describe("Drawing Engine — A4 Technical Sheets & Rebar Detailing", () => {
           p.type === "rect" && p.y >= 108 && p.x < 120 && p.height > 0.5,
       );
       expect(secRects.length).toBeGreaterThanOrEqual(3);
-      const lean = sheet.primitives.find(
-        (p) => p.type === "text" && (p.text.includes("MAGRO") || p.text.includes("CONCRETO MAGRO")),
-      );
+      const lean = secRects.find((r) => r.fillColor === "#eceff1");
+      const pier = secRects.find((r) => r.fillColor === "#d0d7de");
       const blockRect = secRects.reduce((a, b) => (a.height * a.width > b.height * b.width ? a : b));
-      // Magro fica na faixa inferior do corte (Y folha maior = mais abaixo)
-      expect(lean?.type === "text" && lean.y > blockRect.y).toBe(true);
+      // Magro abaixo do bloco e arranque acima (Y folha maior = mais abaixo)
+      expect(lean!.y).toBeGreaterThan(blockRect.y);
+      expect(pier!.y).toBeLessThan(blockRect.y);
     });
 
     it("planta e corte projetam retângulos com altura positiva dentro das caixas", () => {
@@ -848,7 +848,7 @@ describe("Drawing Engine — A4 Technical Sheets & Rebar Detailing", () => {
       expect(belowText?.type === "text" && belowText.y).toBeGreaterThan(40);
     });
 
-    it("corte do bloco: cotas de H e embutimento ficam à esquerda do contorno", () => {
+    it("corte do bloco: cota de H à esquerda do contorno e embutimento anotado", () => {
       const sheet = drawPileCapSheet({
         blockResult: mockBlockOf(1.4, 1.4, [0]),
         pileDiameter_m: 0.4,
@@ -868,7 +868,7 @@ describe("Drawing Engine — A4 Technical Sheets & Rebar Detailing", () => {
       );
       expect(secRects.length).toBeGreaterThan(0);
       const blockRect = secRects.reduce((a, b) => (a.width > b.width ? a : b));
-      // Cotas numéricas curtas (H ~50, embutimento 10) no corte, à esquerda do bloco
+      // Cota de H (altura do bloco) no corte, à esquerda do bloco
       const dimTexts = sheet.primitives.filter(
         (p): p is Extract<typeof p, { type: "text" }> =>
           p.type === "text" &&
@@ -877,7 +877,10 @@ describe("Drawing Engine — A4 Technical Sheets & Rebar Detailing", () => {
           /^\d+$/.test(p.text) &&
           p.x < blockRect.x,
       );
-      expect(dimTexts.length).toBeGreaterThanOrEqual(2);
+      expect(dimTexts.length).toBeGreaterThanOrEqual(1);
+      // Embutimento (10 cm, constante) vai em nota, não em cota de 2 mm de altura
+      const texts = sheet.primitives.filter((p) => p.type === "text").map((p) => (p as { text: string }).text);
+      expect(texts.some((t) => t.includes("embutidas 10 cm"))).toBe(true);
     });
   });
 });

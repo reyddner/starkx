@@ -56,6 +56,7 @@ import {
   withCapOnColumn,
 } from './columnCaps'
 import type { FoundationKindUi, LayerRow, WizardStep } from './wizardTypes'
+import type { FootingDesignBase } from './buildProjectOutputs'
 import type { FoundationSuggestResult } from '@assist/index'
 import { suggestFoundationKind } from '@assist/index'
 import {
@@ -308,6 +309,48 @@ const initialColumn = createColumn({ columnLabel: 'P01' })
  * Projetos salvos antes da revisão dos métodos podiam usar o modo de compatibilidade
  * (removido). Passam para o modo único; a regra "média" daquele modo vira "mínimo".
  */
+/** Parâmetros da sapata do projeto, sem as cargas do pilar (iguais para todos os pilares). */
+export function footingDesignBaseFrom(
+  s: Pick<
+    ProjectState,
+    | 'loadIsDesign'
+    | 'footingShape'
+    | 'footingAspect'
+    | 'footingAdmMode'
+    | 'footingSigmaAdm_kPa'
+    | 'footingC_kPa'
+    | 'footingPhi_deg'
+    | 'footingGamma_kN_m3'
+    | 'footingDf_m'
+    | 'footingFs'
+    | 'footingThickness_m'
+    | 'fck_MPa'
+    | 'fyk_MPa'
+  >,
+): FootingDesignBase {
+  return {
+    loadIsDesign: s.loadIsDesign,
+    shape: s.footingShape,
+    aspectRatio: s.footingAspect,
+    admMode: s.footingAdmMode,
+    sigmaAdm_kPa: s.footingAdmMode === 'user' ? s.footingSigmaAdm_kPa : null,
+    soil:
+      s.footingAdmMode === 'bearing'
+        ? {
+            c_kPa: s.footingC_kPa,
+            phi_deg: s.footingPhi_deg,
+            gamma_kN_m3: s.footingGamma_kN_m3,
+            embedment_m: s.footingDf_m,
+            fsBearing: s.footingFs,
+          }
+        : null,
+    thickness_m: s.footingThickness_m,
+    gammaConcrete_kN_m3: 25,
+    fck_MPa: s.fck_MPa ?? undefined,
+    fyk_MPa: s.fyk_MPa,
+  }
+}
+
 export function normalizeLegacyMode<T extends Record<string, unknown>>(p: T): T {
   if (p.mode !== 'excel_legacy') return p
   return {
@@ -807,12 +850,15 @@ export const useProjectStore = create<ProjectState>()(
             N_kN: c.N_kN,
             Mx_kNm: c.Mx_kNm,
             My_kNm: c.My_kNm,
+            columnWidth_m: c.columnWidth_m,
+            columnDepth_m: c.columnDepth_m,
           })),
           loadIsDesign: s.loadIsDesign,
           sigmaAdm_kPa: s.footingSigmaAdm_kPa > 0 ? s.footingSigmaAdm_kPa : 200,
           footingAspect: s.footingAspect,
           layers: s.layers.map((l) => ({ depth_m: l.depth_m, nspt: l.nspt })),
           waterLevel_m: s.waterLevel_m,
+          footingBaseDepth_m: s.footingDf_m > 0 ? s.footingDf_m : undefined,
         })
         // Remount da Análise não desfaz aceite já confirmado (Bugbot DEC-54).
         set({
@@ -1440,28 +1486,10 @@ export const useProjectStore = create<ProjectState>()(
         }
         try {
           const footingResult = designFooting({
+            ...footingDesignBaseFrom(s),
             Nk_kN: s.designLoad_kN,
-            loadIsDesign: s.loadIsDesign,
             Mx_kNm: s.footingMx_kNm ?? undefined,
             My_kNm: s.footingMy_kNm ?? undefined,
-            shape: s.footingShape,
-            aspectRatio: s.footingAspect,
-            admMode: s.footingAdmMode,
-            sigmaAdm_kPa: s.footingAdmMode === 'user' ? s.footingSigmaAdm_kPa : null,
-            soil:
-              s.footingAdmMode === 'bearing'
-                ? {
-                    c_kPa: s.footingC_kPa,
-                    phi_deg: s.footingPhi_deg,
-                    gamma_kN_m3: s.footingGamma_kN_m3,
-                    embedment_m: s.footingDf_m,
-                    fsBearing: s.footingFs,
-                  }
-                : null,
-            thickness_m: s.footingThickness_m,
-            gammaConcrete_kN_m3: 25,
-            fck_MPa: s.fck_MPa ?? undefined,
-            fyk_MPa: s.fyk_MPa,
             columnWidth_m: s.columnLoad?.columnWidth_m ?? null,
             columnDepth_m: s.columnLoad?.columnDepth_m ?? null,
           })

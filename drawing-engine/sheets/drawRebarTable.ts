@@ -1,5 +1,5 @@
 import type { DrawingPrimitive } from "../core/types";
-import { fitFontSize, fitTextToWidth } from "../core/textFit";
+import { fitFontSize, fitTextToWidth, MIN_FONT_MM } from "../core/textFit";
 import type { ElementTakeoff } from "../../structural-engine/takeoff/types";
 
 export interface RebarTablePosition {
@@ -92,7 +92,7 @@ export function drawRebarTable(
   const headers = ["POS", "AÇO", "DIAM", "QTD", "COMP", "PESO"];
   headers.forEach((h, i) => {
     const cw = colWidths[i]! - 1;
-    const fs = fitFontSize(h, 4.2, cw, 3.2);
+    const fs = fitFontSize(h, 4.2, cw);
     primitives.push({
       type: "text",
       text: fitTextToWidth(h, fs, cw),
@@ -131,10 +131,10 @@ export function drawRebarTable(
 
     values.forEach((val, i) => {
       const cw = colWidths[i]! - 2;
-      const fs = fitFontSize(val, BODY_FS, cw, 3.0);
+      const fs = fitFontSize(val, BODY_FS, cw, MIN_FONT_MM, false);
       primitives.push({
         type: "text",
-        text: fitTextToWidth(val, fs, cw),
+        text: fitTextToWidth(val, fs, cw, false),
         x: colX[i]! + colWidths[i]! / 2,
         y: currentY + rowH / 2,
         fontSize: fs,

@@ -8,6 +8,7 @@ import { createModelToSheetTransform, selectBestScale } from "../core/autoScale"
 import { sheetRectFromModel } from "../core/rectHelper";
 import { drawRebarShape } from "../rebars/rebarShapeDrafter";
 import { extractRebarShapes } from "../rebars/rebarExtractor";
+import { wrapTextToLines } from "../core/textFit";
 import { drawRebarTable } from "./drawRebarTable";
 import { drawTitleBlock } from "./drawTitleBlock";
 import { drawSheetBorders } from "./sheetBorders";
@@ -39,24 +40,20 @@ export function drawFootingSheet(input: FootingSheetInput): A4Sheet {
   // -------------------------------------------------------------
   // 2. PLANTA BAIXA DA SAPATA (x: 22 a 118, y: 12 a 105)
   // -------------------------------------------------------------
-  const planBox = { x: 22, y: 12, width: 95, height: 90 };
-  const planScale = selectBestScale(
-    { width_m: B, length_m: L },
-    { x: planBox.x, y: planBox.y, width: planBox.width, height: planBox.height - 12 },
-  );
-  const planTransform = createModelToSheetTransform(
-    { width_m: B, length_m: L },
-    { x: planBox.x, y: planBox.y + 6, width: planBox.width, height: planBox.height - 12 },
-    planScale,
-  );
+  // Layout em 3 colunas, igual ao do bloco:
+  //   planta/corte x=22..116 | desdobramento x=118..182 | tabela/carimbo x=185..285
+  const planBox = { x: 22, y: 12, width: 94, height: 90 };
+  // Área do desenho já descontando título e cotas (B embaixo, L à direita).
+  const planDraw = { x: planBox.x + 6, y: planBox.y + 10, width: planBox.width - 24, height: planBox.height - 22 };
+  const planScale = selectBestScale({ width_m: B, length_m: L }, planDraw, 0);
+  const planTransform = createModelToSheetTransform({ width_m: B, length_m: L }, planDraw, planScale);
 
-  // Título
   primitives.push({
     type: "text",
-    text: `PLANTA BAIXA (ESCALA ${planScale.scaleLabel})`,
+    text: `PLANTA (${planScale.scaleLabel})`,
     x: planBox.x + planBox.width / 2,
     y: planBox.y + 3,
-    fontSize: 6.0,
+    fontSize: 5.0,
     align: "center",
     baseline: "middle",
     color: "#7A5820",
@@ -191,15 +188,13 @@ export function drawFootingSheet(input: FootingSheetInput): A4Sheet {
   // -------------------------------------------------------------
   // 3. CORTE VERTICAL A-A (x: 22 a 118, y: 108 a 200)
   // -------------------------------------------------------------
-  const secBox = { x: 22, y: 108, width: 95, height: 90 };
+  const secBox = { x: 22, y: 108, width: 94, height: 90 };
   const leanH = 0.05;
   const pierStickUp = 0.25;
   const totalSecModelH = H + leanH + pierStickUp;
-
-  const secScale = selectBestScale(
-    { width_m: B, length_m: totalSecModelH },
-    { x: secBox.x, y: secBox.y, width: secBox.width, height: secBox.height - 12 },
-  );
+  // Reserva: cota da altura à esquerda, cota da largura embaixo.
+  const secDraw = { x: secBox.x + 14, y: secBox.y + 10, width: secBox.width - 18, height: secBox.height - 22 };
+  const secScale = selectBestScale({ width_m: B + 0.1, length_m: totalSecModelH }, secDraw, 0);
 
   const secTransform = createModelToSheetTransform(
     {
@@ -208,16 +203,16 @@ export function drawFootingSheet(input: FootingSheetInput): A4Sheet {
       // O corte vai de -magro até (altura da sapata + arranque).
       centerY_m: (H + pierStickUp - leanH) / 2,
     },
-    { x: secBox.x, y: secBox.y + 6, width: secBox.width, height: secBox.height - 12 },
+    secDraw,
     secScale,
   );
 
   primitives.push({
     type: "text",
-    text: `CORTE VERTICAL A-A (ESCALA ${secScale.scaleLabel})`,
+    text: `CORTE A-A (${secScale.scaleLabel})`,
     x: secBox.x + secBox.width / 2,
     y: secBox.y + 3,
-    fontSize: 6.0,
+    fontSize: 5.0,
     align: "center",
     baseline: "middle",
     color: "#7A5820",
@@ -366,18 +361,18 @@ export function drawFootingSheet(input: FootingSheetInput): A4Sheet {
   );
   primitives.push(
     ...createLinearDimension({
-      start: { x: secBotLeft.x, y: secBotLeft.y },
-      end: { x: secBotRight.x, y: secBotLeft.y },
-      offset_mm: 5.5,
+      start: { x: secBotLeft.x, y: secLeanL.y },
+      end: { x: secBotRight.x, y: secLeanL.y },
+      offset_mm: 5.0,
       measurement_cm: Math.round(B * 100),
       orientation: "horizontal",
     }),
   );
 
   // -------------------------------------------------------------
-  // 4. COLUNA CENTRAL: DESDOBRAMENTO DAS BARRAS (x: 120 a 184)
+  // 4. COLUNA CENTRAL: DESDOBRAMENTO DAS BARRAS (x: 118 a 182)
   // -------------------------------------------------------------
-  const rebarColBox = { x: 120, y: 10, width: 64, height: 190 };
+  const rebarColBox = { x: 118, y: 10, width: 64, height: 140 };
   primitives.push({
     type: "rect",
     x: rebarColBox.x,
@@ -389,7 +384,7 @@ export function drawFootingSheet(input: FootingSheetInput): A4Sheet {
     fillColor: "#ffffff",
   });
 
-  const rebarHeaderH = 6.0;
+  const rebarHeaderH = 5.5;
   primitives.push({
     type: "rect",
     x: rebarColBox.x,
@@ -402,72 +397,65 @@ export function drawFootingSheet(input: FootingSheetInput): A4Sheet {
   });
   primitives.push({
     type: "text",
-    text: "DESDOBRAMENTO DAS BARRAS",
+    text: "DESDOBRAMENTO",
     x: rebarColBox.x + rebarColBox.width / 2,
     y: rebarColBox.y + rebarHeaderH / 2,
-    fontSize: 5.8,
+    fontSize: 5.0,
     align: "center",
     baseline: "middle",
     color: "#7A5820",
     bold: true,
   });
 
-  // Se takeoff fornecido, extrai formas; senão gera padrão
-  const rebarShapes = input.takeoff
-    ? extractRebarShapes(input.takeoff, { width_m: B, length_m: L, height_m: H, cover_m: 0.05 })
-    : [
-        {
-          posNumber: 1,
-          label: "N1",
-          name: "Malha inferior X",
-          diameter_mm: footingResult.rebar?.suggestBar_mm ?? 10.0,
-          steelGrade: "CA-50" as const,
-          count: Math.max(4, Math.round((B * 100) / (footingResult.rebar?.suggestSpacing_cm ?? 15))),
-          totalLength_m: 10,
-          unitLength_cm: Math.round(L * 100 - 10 + 2 * Math.round(h0 * 100 - 6)),
-          kind: "u_shape" as const,
-          legs_cm: [Math.round(h0 * 100 - 6), Math.round(L * 100 - 10), Math.round(h0 * 100 - 6)],
-        },
-        {
-          posNumber: 2,
-          label: "N2",
-          name: "Malha inferior Y",
-          diameter_mm: footingResult.rebar?.suggestBar_mm ?? 10.0,
-          steelGrade: "CA-50" as const,
-          count: Math.max(4, Math.round((L * 100) / (footingResult.rebar?.suggestSpacing_cm ?? 15))),
-          totalLength_m: 10,
-          unitLength_cm: Math.round(B * 100 - 10 + 2 * Math.round(h0 * 100 - 6)),
-          kind: "u_shape" as const,
-          legs_cm: [Math.round(h0 * 100 - 6), Math.round(B * 100 - 10), Math.round(h0 * 100 - 6)],
-        },
-      ];
-
-  const slotH = 34;
-  rebarShapes.forEach((shape, idx) => {
-    const slotY = rebarColBox.y + rebarHeaderH + 2 + idx * slotH;
-    if (slotY + slotH <= rebarColBox.y + rebarColBox.height) {
-      primitives.push(
-        ...drawRebarShape(shape, {
-          x: rebarColBox.x + 2,
-          y: slotY,
-          width: rebarColBox.width - 4,
-          height: slotH - 2,
-        }),
-      );
-    }
-  });
+  if (input.takeoff) {
+    const rebarShapes = extractRebarShapes(input.takeoff, {
+      width_m: B,
+      length_m: L,
+      height_m: H,
+      cover_m: 0.05,
+    });
+    const slotH = 34;
+    rebarShapes.forEach((shape, idx) => {
+      const slotY = rebarColBox.y + rebarHeaderH + 2 + idx * slotH;
+      if (slotY + slotH <= rebarColBox.y + rebarColBox.height) {
+        primitives.push(
+          ...drawRebarShape(shape, {
+            x: rebarColBox.x + 2,
+            y: slotY,
+            width: rebarColBox.width - 4,
+            height: slotH - 2,
+          }),
+        );
+      }
+    });
+  } else {
+    // Sem fck não há armadura calculada: avisa em vez de desenhar barras fictícias.
+    const msg = "Armadura não calculada. Informe o fck do concreto para dimensionar flexão, biela e punção da sapata.";
+    wrapTextToLines(msg, 4.0, rebarColBox.width - 6, 6, false).forEach((line, i) => {
+      primitives.push({
+        type: "text",
+        text: line,
+        x: rebarColBox.x + rebarColBox.width / 2,
+        y: rebarColBox.y + rebarHeaderH + 10 + i * 5,
+        fontSize: 4.0,
+        align: "center",
+        baseline: "middle",
+        color: "#b30000",
+      });
+    });
+  }
 
   // -------------------------------------------------------------
   // 5. COLUNA DIREITA: TABELA E CARIMBO
   // -------------------------------------------------------------
   if (input.takeoff) {
-    const tableRes = drawRebarTable(input.takeoff, { x: 187, y: 10, width: 100, maxHeight: 140 });
+    const tableRes = drawRebarTable(input.takeoff, { x: 185, y: 10, width: 100, maxHeight: 135 });
     primitives.push(...tableRes.primitives);
   }
 
   const fullTitleInfo: TitleBlockInfo = {
     ...titleInfo,
-    scaleLabel: planScale.scaleLabel,
+    scaleLabel: "VER DET.",
   };
   primitives.push(...drawTitleBlock(fullTitleInfo, { x: 185, y: 152, width: 100, height: 48 }));
 

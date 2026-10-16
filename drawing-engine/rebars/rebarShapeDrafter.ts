@@ -5,6 +5,13 @@ import type {
   TextPrimitive,
 } from "../core/types";
 import type { RebarShapeDefinition } from "./types";
+import {
+  estimateTextWidthMm,
+  fitFontSize,
+  fitTextToWidth,
+  MIN_FONT_MM,
+  TEXT_METRICS,
+} from "../core/textFit";
 
 export interface DrawRebarSlotOptions {
   slotX: number;
@@ -46,27 +53,40 @@ export function drawRebarShape(
   const primitives: DrawingPrimitive[] = [];
 
   const kind = rebar.shapeKind ?? rebar.kind ?? "straight";
-  const mainColor = "#7A5820"; // Azul escuro técnico estrutural
+  const mainColor = "#7A5820";
   const dimColor = "#222222";
   const strokeW = 0.9;
+  const dimFs = 4.2;
+  const dimH = dimFs * TEXT_METRICS.capHeight;
 
-  // Área útil de desenho da barra (deixando espaço inferior para o texto N Ø C)
-  const drawW = slotW - 12;
-  const drawH = slotH - 10;
-  const cx = slotX + drawW / 2 + 4;
-  const cy = slotY + drawH / 2 + 1;
+  // Faixa de baixo: legenda "N Ø C". O resto é a área da barra + cotas.
+  const tagFs = fitFontSize(tagTextOf(rebar), 4.8, slotW - 2);
+  const tagBand = tagFs + 2.5;
+  const area = { x: slotX, y: slotY + 1, w: slotW, h: Math.max(6, slotH - 1 - tagBand) };
+  const cx = area.x + area.w / 2;
+  const label = (v: number) => `${Math.round(v)}`;
+  const labelW = (v: number) => estimateTextWidthMm(label(v), dimFs, true);
+  const dimText = (
+    text: string,
+    x: number,
+    y: number,
+    align: TextPrimitive["align"],
+    baseline: TextPrimitive["baseline"],
+  ): TextPrimitive => ({ type: "text", text, x, y, fontSize: dimFs, align, baseline, color: dimColor, bold: true });
 
   if (kind === "closed_rect") {
-    // Estribo retangular fechado com gancho
+    // Estribo retangular fechado: cota de A em cima, de B à direita.
     const legA = rebar.legs_cm[0] ?? 80;
     const legB = rebar.legs_cm[1] ?? 40;
-    const hook = rebar.legs_cm[2] ?? 10;
-
-    const maxLeg = Math.max(legA, legB);
-    const rw = Math.min(drawW * 0.7, (legA / maxLeg) * (drawW * 0.7));
-    const rh = Math.min(drawH * 0.7, (legB / maxLeg) * (drawH * 0.7));
+    const top = area.y + dimH + 2;
+    const availH = Math.max(3, area.y + area.h - top);
+    const side = labelW(legB) + 3;
+    const availW = Math.max(6, area.w - 2 * side - 2);
+    const k = Math.min(availW / Math.max(legA, 1), availH / Math.max(legB, 1));
+    const rw = Math.max(4, legA * k);
+    const rh = Math.max(3, legB * k);
     const rx = cx - rw / 2;
-    const ry = cy - rh / 2;
+    const ry = top + (availH - rh) / 2;
 
     const rect: RectPrimitive = {
       type: "rect",
@@ -79,56 +99,41 @@ export function drawRebarShape(
       rx: 1.0,
     };
     primitives.push(rect);
-
-    // Gancho interno esquemático
+    // Gancho esquemático no canto superior esquerdo.
+    const hookLeg = Math.min(4, rh * 0.45, rw * 0.3);
     primitives.push({
       type: "line",
       x1: rx,
-      y1: ry + 3,
-      x2: rx + 4,
-      y2: ry + 7,
+      y1: ry + hookLeg * 0.4,
+      x2: rx + hookLeg,
+      y2: ry + hookLeg * 1.4,
       strokeWidth: strokeW,
       strokeColor: mainColor,
     });
-
-    // Cotas dos lados
-    primitives.push({
-      type: "text",
-      text: `${Math.round(legA)}`,
-      x: rx + rw / 2,
-      y: ry - 2.5,
-      fontSize: 4.5,
-      align: "center",
-      baseline: "bottom",
-      color: dimColor,
-      bold: true,
-    });
-    primitives.push({
-      type: "text",
-      text: `${Math.round(legB)}`,
-      x: rx + rw + 2.5,
-      y: ry + rh / 2,
-      fontSize: 4.5,
-      align: "left",
-      baseline: "middle",
-      color: dimColor,
-      bold: true,
-    });
-    primitives.push({
-      type: "text",
-      text: `(${Math.round(hook)})`,
-      x: rx + 6,
-      y: ry + 6,
-      fontSize: 4.0,
-      align: "left",
-      baseline: "top",
-      color: "#555555",
-    });
+    primitives.push(dimText(label(legA), rx + rw / 2, ry - 1.5, "center", "bottom"));
+    primitives.push(dimText(label(legB), rx + rw + 2.5, ry + rh / 2, "left", "middle"));
+    // Gancho (cm) só quando cabe dentro do estribo sem tocar o traço.
+    const hook = rebar.legs_cm[2];
+    if (hook != null) {
+      const hookText = `(${Math.round(hook)})`;
+      const fs = MIN_FONT_MM;
+      if (rh >= fs * 1.6 + 2 && rw >= estimateTextWidthMm(hookText, fs, false) + hookLeg + 4) {
+        primitives.push({
+          type: "text",
+          text: hookText,
+          x: rx + hookLeg + 2,
+          y: ry + rh / 2,
+          fontSize: fs,
+          align: "left",
+          baseline: "middle",
+          color: "#555555",
+        });
+      }
+    }
   } else if (kind === "circular_ring") {
-    // Estribo circular com gancho
     const dia_cm = rebar.legs_cm[0] ?? 40;
-    const r_mm = Math.min(drawW, drawH) * 0.35;
-
+    const r_mm = Math.max(3, Math.min(area.w, area.h) / 2 - 1);
+    const cy = area.y + area.h / 2;
     const circ: CirclePrimitive = {
       type: "circle",
       cx,
@@ -138,148 +143,59 @@ export function drawRebarShape(
       strokeColor: mainColor,
     };
     primitives.push(circ);
-
-    // Cota diâmetro
-    primitives.push({
-      type: "text",
-      text: `Ø ${Math.round(dia_cm)}`,
-      x: cx,
-      y: cy,
-      fontSize: 4.5,
-      align: "center",
-      baseline: "middle",
-      color: dimColor,
-      bold: true,
-    });
-  } else if (kind === "u_shape") {
-    // Barra em U (gancho - vão - gancho)
-    const hookA = rebar.legs_cm[0] ?? 20;
-    const span = rebar.legs_cm[1] ?? 80;
-    const hookB = rebar.legs_cm[2] ?? 20;
-
-    const w_mm = drawW * 0.75;
-    const h_mm = Math.min(drawH * 0.45, w_mm * (hookA / span));
-    const bx = cx - w_mm / 2;
-    const by = cy + h_mm / 2;
-
+    const text = `Ø ${Math.round(dia_cm)}`;
+    const inside = estimateTextWidthMm(text, dimFs, true) <= r_mm * 1.6;
     primitives.push(
-      { type: "line", x1: bx, y1: by - h_mm, x2: bx, y2: by, strokeWidth: strokeW, strokeColor: mainColor },
-      { type: "line", x1: bx, y1: by, x2: bx + w_mm, y2: by, strokeWidth: strokeW, strokeColor: mainColor },
-      { type: "line", x1: bx + w_mm, y1: by, x2: bx + w_mm, y2: by - h_mm, strokeWidth: strokeW, strokeColor: mainColor },
+      inside
+        ? dimText(text, cx, cy, "center", "middle")
+        : dimText(text, cx + r_mm + 2, cy, "left", "middle"),
     );
+  } else if (kind === "u_shape" || kind === "l_shape") {
+    // U: gancho – vão – gancho; L: vão – gancho. Vão cotado embaixo, ganchos ao lado.
+    const isU = kind === "u_shape";
+    const span = (isU ? rebar.legs_cm[1] : rebar.legs_cm[0]) ?? 80;
+    const hookR = (isU ? rebar.legs_cm[2] : rebar.legs_cm[1]) ?? 20;
+    const hookL = isU ? (rebar.legs_cm[0] ?? 20) : 0;
+    const sideL = isU ? labelW(hookL) + 3 : 2;
+    const sideR = labelW(hookR) + 3;
+    const w_mm = Math.max(8, area.w - sideL - sideR - 2);
+    const by = area.y + area.h - dimH - 2.5;
+    const h_mm = Math.max(2.5, Math.min(by - area.y - 1, w_mm * (Math.max(hookL, hookR) / Math.max(span, 1))));
+    const bx = area.x + sideL + 1 + (area.w - sideL - sideR - 2 - w_mm) / 2;
 
-    // Cotas
-    primitives.push({
-      type: "text",
-      text: `${Math.round(span)}`,
-      x: cx,
-      y: by + 2.5,
-      fontSize: 4.5,
-      align: "center",
-      baseline: "top",
-      color: dimColor,
-      bold: true,
-    });
-    primitives.push({
-      type: "text",
-      text: `${Math.round(hookA)}`,
-      x: bx - 2.5,
-      y: by - h_mm / 2,
-      fontSize: 4.5,
-      align: "right",
-      baseline: "middle",
-      color: dimColor,
-      bold: true,
-    });
-    primitives.push({
-      type: "text",
-      text: `${Math.round(hookB)}`,
-      x: bx + w_mm + 2.5,
-      y: by - h_mm / 2,
-      fontSize: 4.5,
-      align: "left",
-      baseline: "middle",
-      color: dimColor,
-      bold: true,
-    });
-  } else if (kind === "l_shape") {
-    // Barra em L (haste reta + gancho)
-    const stem = rebar.legs_cm[0] ?? 100;
-    const hook = rebar.legs_cm[1] ?? 30;
-
-    const w_mm = drawW * 0.75;
-    const h_mm = Math.min(drawH * 0.4, w_mm * 0.35);
-    const bx = cx - w_mm / 2;
-    const by = cy;
-
-    primitives.push(
-      { type: "line", x1: bx, y1: by, x2: bx + w_mm, y2: by, strokeWidth: strokeW, strokeColor: mainColor },
-      { type: "line", x1: bx + w_mm, y1: by, x2: bx + w_mm, y2: by - h_mm, strokeWidth: strokeW, strokeColor: mainColor },
-    );
-
-    primitives.push({
-      type: "text",
-      text: `${Math.round(stem)}`,
-      x: cx,
-      y: by + 2.5,
-      fontSize: 4.5,
-      align: "center",
-      baseline: "top",
-      color: dimColor,
-      bold: true,
-    });
-    primitives.push({
-      type: "text",
-      text: `${Math.round(hook)}`,
-      x: bx + w_mm + 2.5,
-      y: by - h_mm / 2,
-      fontSize: 4.5,
-      align: "left",
-      baseline: "middle",
-      color: dimColor,
-      bold: true,
-    });
+    primitives.push({ type: "line", x1: bx, y1: by, x2: bx + w_mm, y2: by, strokeWidth: strokeW, strokeColor: mainColor });
+    primitives.push({ type: "line", x1: bx + w_mm, y1: by, x2: bx + w_mm, y2: by - h_mm, strokeWidth: strokeW, strokeColor: mainColor });
+    if (isU) {
+      primitives.push({ type: "line", x1: bx, y1: by - h_mm, x2: bx, y2: by, strokeWidth: strokeW, strokeColor: mainColor });
+      primitives.push(dimText(label(hookL), bx - 2.5, by - h_mm / 2, "right", "middle"));
+    }
+    primitives.push(dimText(label(hookR), bx + w_mm + 2.5, by - h_mm / 2, "left", "middle"));
+    primitives.push(dimText(label(span), bx + w_mm / 2, by + 1.5, "center", "top"));
   } else {
-    // Barra reta ou diagonal
-    const len_cm = rebar.totalLength_cm;
-    const w_mm = drawW * 0.8;
+    // Barra reta (ou diagonal desenhada reta): comprimento em cima da barra.
+    const len_cm = rebar.legs_cm[0] ?? rebar.unitLength_cm ?? rebar.totalLength_cm ?? 100;
+    const w_mm = area.w * 0.8;
     const bx = cx - w_mm / 2;
-
+    const y = area.y + Math.min(area.h, dimH + 2 + (area.h - dimH - 2) / 2);
     primitives.push({
       type: "line",
       x1: bx,
-      y1: cy,
+      y1: y,
       x2: bx + w_mm,
-      y2: cy,
+      y2: y,
       strokeWidth: strokeW,
       strokeColor: mainColor,
     });
-
-    primitives.push({
-      type: "text",
-      text: `${Math.round(len_cm ?? 100)}`,
-      x: cx,
-      y: cy - 2.5,
-      fontSize: 4.5,
-      align: "center",
-      baseline: "bottom",
-      color: dimColor,
-      bold: true,
-    });
+    primitives.push(dimText(label(len_cm), cx, y - 1.5, "center", "bottom"));
   }
 
-  // Linha de texto com a legenda oficial: Ex.: "2 N1 Ø10 C=274"
-  const totalLen = rebar.totalLength_cm ?? rebar.unitLength_cm ?? Math.round((rebar.totalLength_m ?? 1) * 100);
-  const spacingText = rebar.spacing_cm ? ` c/${Math.round(rebar.spacing_cm)}` : "";
-  const diaText = rebar.diameter_mm % 1 === 0 ? rebar.diameter_mm.toFixed(0) : rebar.diameter_mm.toFixed(1);
-  const tagText = `${rebar.count} N${rebar.posNumber} Ø${diaText}${spacingText} C=${Math.round(totalLen)}`;
-
+  // Legenda oficial: Ex.: "2 N1 Ø10 C=274"
   const tag: TextPrimitive = {
     type: "text",
-    text: tagText,
+    text: fitTextToWidth(tagTextOf(rebar), tagFs, slotW - 2),
     x: cx,
     y: slotY + slotH - 1.5,
-    fontSize: 4.8,
+    fontSize: tagFs,
     align: "center",
     baseline: "bottom",
     color: "#000000",
@@ -288,4 +204,13 @@ export function drawRebarShape(
   primitives.push(tag);
 
   return primitives;
+}
+
+function tagTextOf(rebar: RebarShapeDefinition): string {
+  const totalLen =
+    rebar.totalLength_cm ?? rebar.unitLength_cm ?? Math.round((rebar.totalLength_m ?? 1) * 100);
+  const spacingText = rebar.spacing_cm ? ` c/${Math.round(rebar.spacing_cm)}` : "";
+  const diaText =
+    rebar.diameter_mm % 1 === 0 ? rebar.diameter_mm.toFixed(0) : rebar.diameter_mm.toFixed(1);
+  return `${rebar.count} N${rebar.posNumber} Ø${diaText}${spacingText} C=${Math.round(totalLen)}`;
 }

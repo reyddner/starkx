@@ -196,6 +196,54 @@ describe("DEC-54 foundationSuggest", () => {
     expect(r.soil.sigmaAdmFromSpt_kPa).toBe(220);
     expect(r.soil.sigmaAdmEffective_kPa).toBe(220);
   });
+
+  it("camada mole abaixo da sapata (no bulbo de tensões) veta a sapata", () => {
+    // 3 m de solo bom em cima (passa no critério raso) e argila mole de 4 a 9 m.
+    const layers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((d) => ({
+      depth_m: d,
+      nspt: d <= 3 ? 15 : d <= 9 ? 3 : 30,
+    }));
+    const r = suggestFoundationKind({
+      columns: [{ id: "1", columnLabel: "P01", N_kN: 1500, Mx_kNm: null, My_kNm: null }],
+      loadIsDesign: false,
+      sigmaAdm_kPa: 200,
+      layers,
+    });
+    expect(r.soil.softShallow).toBe(false);
+    expect(r.probes[0]!.footingOk).toBe(false);
+    expect(r.probes[0]!.message).toMatch(/bulbo/);
+    expect(r.suggestedKind).toBe("pile_cap");
+  });
+
+  it("σadm do ensaio cai para o NSPT médio do bulbo quando ele é pior que o raso", () => {
+    // Raso N=15 (300 kPa); de 4 a 12 m N=8 (160 kPa).
+    const layers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((d) => ({
+      depth_m: d,
+      nspt: d <= 3 ? 15 : 8,
+    }));
+    const r = suggestFoundationKind({
+      columns: [{ id: "1", columnLabel: "P01", N_kN: 600, Mx_kNm: null, My_kNm: null }],
+      loadIsDesign: false,
+      sigmaAdm_kPa: 400,
+      layers,
+    });
+    const p = r.probes[0]!;
+    expect(p.footingOk).toBe(true);
+    // O bulbo (1,5 m a ~4,5 m) mistura N=15 e N=8: σ abaixo dos 300 kPa do raso.
+    expect(p.area_m2!).toBeGreaterThan(600 / 290);
+    expect(p.message).toMatch(/bulbo/);
+  });
+
+  it("solo bom e profundo com carga moderada continua sugerindo sapata", () => {
+    const layers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((d) => ({ depth_m: d, nspt: 14 + d }));
+    const r = suggestFoundationKind({
+      columns: [{ id: "1", columnLabel: "P01", N_kN: 1500, Mx_kNm: null, My_kNm: null }],
+      loadIsDesign: false,
+      sigmaAdm_kPa: 300,
+      layers,
+    });
+    expect(r.suggestedKind).toBe("footing");
+  });
 });
 
 describe("DEC-54 resizeColumns", () => {

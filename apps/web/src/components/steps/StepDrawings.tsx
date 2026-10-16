@@ -6,7 +6,7 @@ import {
   exportSingleSheetToPdf,
   type A4Sheet,
 } from '@drawing'
-import { useProjectStore } from '../../store/projectStore'
+import { footingDesignBaseFrom, useProjectStore } from '../../store/projectStore'
 import { buildProjectOutputs } from '../../store/buildProjectOutputs'
 import { progressChecklist } from '../../store/wizardFlow'
 import { FlowNavButtons } from '../FlowNavButtons'
@@ -51,6 +51,21 @@ export function StepDrawings() {
       blockResult: s.blockResult,
       structural: s.structural,
       footingResult: s.footingResult,
+      footingDesignBase: footingDesignBaseFrom({
+        loadIsDesign: s.loadIsDesign,
+        footingShape: s.footingShape,
+        footingAspect: s.footingAspect,
+        footingAdmMode: s.footingAdmMode,
+        footingSigmaAdm_kPa: s.footingSigmaAdm_kPa,
+        footingC_kPa: s.footingC_kPa,
+        footingPhi_deg: s.footingPhi_deg,
+        footingGamma_kN_m3: s.footingGamma_kN_m3,
+        footingDf_m: s.footingDf_m,
+        footingFs: s.footingFs,
+        footingThickness_m: s.footingThickness_m,
+        fck_MPa: s.fck_MPa,
+        fyk_MPa: s.fyk_MPa,
+      }),
       fck_MPa: s.fck_MPa,
       fyk_MPa: s.fyk_MPa,
       pileTypeId: s.pileTypeId,
@@ -82,6 +97,16 @@ export function StepDrawings() {
     s.blockResult,
     s.structural,
     s.footingResult,
+    s.footingShape,
+    s.footingAspect,
+    s.footingAdmMode,
+    s.footingSigmaAdm_kPa,
+    s.footingC_kPa,
+    s.footingPhi_deg,
+    s.footingGamma_kN_m3,
+    s.footingDf_m,
+    s.footingFs,
+    s.footingThickness_m,
     s.fck_MPa,
     s.fyk_MPa,
     s.pileTypeId,

@@ -45,6 +45,6 @@ Registro das decisões citadas no código (`DEC-xx`). Fórmulas e fontes: `docs/
 | DEC-50 | Dashboard e biblioteca de projetos salvos no navegador. |
 | DEC-54 | Fluxo começa pelas cargas; a análise sugere o tipo de fundação. |
 | DEC-55 | Revisão por pilar na análise. |
-| DEC-56 | Análise do SPT raso: σadm indicativo ≈ 20·N̄ (kPa), limitado a 50–350 kPa; solo raso fraco desaconselha sapata. |
+| DEC-56 | Análise do SPT raso: σadm indicativo ≈ 20·N̄ (kPa), limitado a 50–350 kPa; solo raso fraco desaconselha sapata. O ensaio de sapata também olha o bulbo de tensões (da cota de apoio até 2B abaixo): NSPT < 4 ali veta a sapata, e o σadm do ensaio cai para 20·N̄ do bulbo quando este for menor. |
 | DEC-58 | A concepção recomendada já entra aplicada até o usuário confirmar outra escolha. |
 | DEC-61 | Carregar o exemplo é escolha explícita: a análise não troca o tipo de fundação. "Estaca isolada" (estudo de capacidade) permanece assim enquanto 1 estaca basta. |

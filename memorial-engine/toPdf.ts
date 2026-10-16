@@ -115,7 +115,8 @@ export async function memorialToPdf(
       thickness: 0.8,
       color: BRAND_BRONZE,
     });
-    y -= 2;
+    // `y` é linha de base: desce o corpo do título para o filete ficar acima das maiúsculas.
+    y -= sizeHeading * 0.9 + 2;
     y = drawWrapped(page, s.title, font, sizeHeading, margin, y, contentW, lineHead, BRAND_BRONZE);
     y -= 4;
 

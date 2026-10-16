@@ -2,6 +2,8 @@
  * Sugestão heurística de tipo de fundação (DEC-54/55/56).
  * Chama footing-engine para teste de sapata; NÃO grava fundação nem calcula Padm.
  * DEC-56: usa sondagem (NSPT raso + NA) para σadm indicativo e veto de sapata em solo fraco.
+ * O ensaio também olha o bulbo de tensões (≈ 2B abaixo da base): camada mole ali veta a
+ * sapata, e o σadm vem do NSPT médio do bulbo quando ele for menor que o raso.
  */
 
 import { designFooting } from "../footing-engine/design";
@@ -20,6 +22,9 @@ export interface SuggestColumnLoad {
   N_kN: number | null;
   Mx_kNm: number | null;
   My_kNm: number | null;
+  /** Dimensões do pilar (m); default do footing-engine (0,30 m). */
+  columnWidth_m?: number | null;
+  columnDepth_m?: number | null;
 }
 
 export interface SuggestSoilLayer {
@@ -41,6 +46,8 @@ export interface FoundationSuggestInput {
   waterLevel_m?: number | null;
   /** Profundidade de apoio típica da sapata para média NSPT (m) */
   shallowDepth_m?: number;
+  /** Cota de apoio da base da sapata (m) para o bulbo de tensões; default 1,5 m. */
+  footingBaseDepth_m?: number;
 }
 
 export interface SoilProfileHint {
@@ -164,6 +171,38 @@ export function analyzeSoilProfile(
   };
 }
 
+/** Profundidade do bulbo de tensões abaixo da base: ≈ 2B (sapata quadrada/retangular). */
+export const BULB_DEPTH_FACTOR = 2;
+
+export interface BulbHint {
+  from_m: number;
+  to_m: number;
+  meanNspt: number;
+  minNspt: number;
+  minAt_m: number;
+}
+
+/** NSPT no bulbo de tensões (base … base + 2B). Null se a sondagem não chega lá. */
+export function bulbNspt(
+  layers: SuggestSoilLayer[] | undefined,
+  baseDepth_m: number,
+  B_m: number,
+): BulbHint | null {
+  const to_m = baseDepth_m + BULB_DEPTH_FACTOR * B_m;
+  const zone = (layers ?? [])
+    .filter((l) => l.depth_m > baseDepth_m && l.depth_m <= to_m + 1e-9 && l.nspt >= 0)
+    .sort((a, b) => a.depth_m - b.depth_m);
+  if (zone.length === 0) return null;
+  const min = zone.reduce((m, l) => (l.nspt < m.nspt ? l : m), zone[0]!);
+  return {
+    from_m: baseDepth_m,
+    to_m,
+    meanNspt: zone.reduce((a, l) => a + l.nspt, 0) / zone.length,
+    minNspt: min.nspt,
+    minAt_m: min.depth_m,
+  };
+}
+
 /**
  * Produto: com pilar, nunca sugerir estaca isolada (contato direto pilar–fuste).
  * Sem sapata viável → sempre bloco sobre estacas (1E+).
@@ -181,6 +220,8 @@ function probeFooting(
   aspect: number,
   maxSide: number,
   softShallow: boolean,
+  layers: SuggestSoilLayer[] | undefined,
+  baseDepth_m: number,
 ): ColumnFootingProbe {
   const N = col.N_kN ?? 0;
   const base: ColumnFootingProbe = {
@@ -207,22 +248,38 @@ function probeFooting(
     };
   }
   try {
-    const r = designFooting({
-      Nk_kN: N,
-      loadIsDesign,
-      Mx_kNm: col.Mx_kNm ?? undefined,
-      My_kNm: col.My_kNm ?? undefined,
-      shape: aspect <= 1.01 ? "square" : "rectangular",
-      aspectRatio: aspect,
-      admMode: "user",
-      sigmaAdm_kPa,
-      thickness_m: null,
-      gammaConcrete_kN_m3: 25,
-    });
+    const size = (sigma: number) =>
+      designFooting({
+        Nk_kN: N,
+        loadIsDesign,
+        Mx_kNm: col.Mx_kNm ?? undefined,
+        My_kNm: col.My_kNm ?? undefined,
+        shape: aspect <= 1.01 ? "square" : "rectangular",
+        aspectRatio: aspect,
+        admMode: "user",
+        sigmaAdm_kPa: sigma,
+        thickness_m: null,
+        gammaConcrete_kN_m3: 25,
+        columnWidth_m: col.columnWidth_m ?? null,
+        columnDepth_m: col.columnDepth_m ?? null,
+      });
+    // Sapata maior → bulbo mais fundo → pode pegar solo pior: itera σadm pelo bulbo.
+    let sigma = sigmaAdm_kPa;
+    let r = size(sigma);
+    let bulb = bulbNspt(layers, baseDepth_m, r.B_m);
+    for (let i = 0; i < 8 && bulb; i++) {
+      const sigmaBulb = sigmaAdmFromShallowNspt(bulb.meanNspt);
+      if (sigmaBulb >= sigma - 1e-6) break;
+      sigma = sigmaBulb;
+      r = size(sigma);
+      bulb = bulbNspt(layers, baseDepth_m, r.B_m);
+    }
     const sideOk = r.B_m <= maxSide && r.L_m <= maxSide;
     const checksOk = r.checks.every((c) => c.status !== "error");
-    const ok = sideOk && checksOk;
+    const softInBulb = bulb != null && bulb.minNspt < 4;
+    const ok = sideOk && checksOk && !softInBulb;
     const suggestedKind = kindForProbe(ok, N);
+    const dims = `${r.B_m.toFixed(2)}×${r.L_m.toFixed(2)} m`;
     return {
       ...base,
       footingOk: ok,
@@ -231,10 +288,12 @@ function probeFooting(
       area_m2: r.area_m2,
       suggestedKind,
       message: ok
-        ? `Sapata OK ≈ ${r.B_m.toFixed(2)}×${r.L_m.toFixed(2)} m (σadm_ef=${sigmaAdm_kPa} kPa)`
-        : !sideOk
-          ? `Sapata grande demais (B=${r.B_m.toFixed(2)} m > ${maxSide} m) — favorece profundidade`
-          : `Verificações da sapata com alerta/erro — revisar ou ir para estacas`,
+        ? `Sapata OK ≈ ${dims} (σadm_ef=${sigma} kPa${sigma < sigmaAdm_kPa ? ", limitado pelo bulbo" : ""})`
+        : softInBulb
+          ? `Camada mole (NSPT=${bulb!.minNspt} a ${bulb!.minAt_m} m) no bulbo de tensões da sapata de ${dims} (até ${bulb!.to_m.toFixed(1)} m) — recalque/ruptura; favorece estacas`
+          : !sideOk
+            ? `Sapata grande demais (${dims} > ${maxSide} m) — favorece profundidade`
+            : `Verificações da sapata com alerta/erro — revisar ou ir para estacas`,
     };
   } catch (e) {
     return {
@@ -257,7 +316,16 @@ export function suggestFoundationKind(input: FoundationSuggestInput): Foundation
   const sigma = soil.sigmaAdmEffective_kPa;
   const loaded = input.columns.filter((c) => c.N_kN != null && c.N_kN > 0);
   const probes = loaded.map((c) =>
-    probeFooting(c, sigma, input.loadIsDesign, aspect, maxSide, soil.softShallow),
+    probeFooting(
+      c,
+      sigma,
+      input.loadIsDesign,
+      aspect,
+      maxSide,
+      soil.softShallow,
+      input.layers,
+      input.footingBaseDepth_m ?? 1.5,
+    ),
   );
 
   const footingOkCount = probes.filter((p) => p.footingOk).length;

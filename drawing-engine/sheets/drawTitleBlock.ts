@@ -3,7 +3,7 @@ import type {
   ImagePrimitive,
   TitleBlockInfo,
 } from "../core/types";
-import { fitFontSize, fitTextToWidth, wrapTextToLines } from "../core/textFit";
+import { fitFontSize, fitTextToWidth } from "../core/textFit";
 
 export interface TitleBlockPosition {
   x: number;
@@ -71,7 +71,7 @@ export function drawTitleBlock(
     };
     primitives.push(img);
     const name = (info.engineerName || "PROJETO ESTRUTURAL").toUpperCase();
-    const nameFs = fitFontSize(name, 4.8, innerW - imgW - 2, 3.2);
+    const nameFs = fitFontSize(name, 4.8, innerW - imgW - 2);
     primitives.push({
       type: "text",
       text: fitTextToWidth(name, nameFs, innerW - imgW - 2),
@@ -85,7 +85,7 @@ export function drawTitleBlock(
     });
   } else {
     const name = (info.engineerName || "PROJETO ESTRUTURAL DE FUNDAÇÕES").toUpperCase();
-    const nameFs = fitFontSize(name, 5.0, innerW, 3.2);
+    const nameFs = fitFontSize(name, 5.0, innerW);
     primitives.push({
       type: "text",
       text: fitTextToWidth(name, nameFs, innerW),
@@ -100,7 +100,7 @@ export function drawTitleBlock(
     if (info.crea) {
       primitives.push({
         type: "text",
-        text: fitTextToWidth(`CREA ${info.crea}`, 3.6, innerW),
+        text: fitTextToWidth(/^\s*CREA/i.test(info.crea) ? info.crea : `CREA ${info.crea}`, 3.6, innerW, false),
         x: x + width / 2,
         y: y + logoH - 2.2,
         fontSize: 3.6,
@@ -111,17 +111,12 @@ export function drawTitleBlock(
     }
   }
 
-  // --- Obra / cliente (2 linhas, sem colisão) ---
-  const obraFs = 4.0;
-  const obraLines = wrapTextToLines(
-    `OBRA: ${info.projectName}${info.projectCode ? ` (${info.projectCode})` : ""}`,
-    obraFs,
-    innerW,
-    1,
-  );
+  // --- Obra / cliente: reduz o corpo antes de truncar ---
+  const obraText = `OBRA: ${info.projectName}${info.projectCode ? ` (${info.projectCode})` : ""}`;
+  const obraFs = fitFontSize(obraText, 4.0, innerW);
   primitives.push({
     type: "text",
-    text: obraLines[0] ?? "",
+    text: fitTextToWidth(obraText, obraFs, innerW),
     x: x + pad,
     y: y1 + 3.5,
     fontSize: obraFs,
@@ -131,16 +126,11 @@ export function drawTitleBlock(
     bold: true,
   });
 
-  const clientFs = 3.6;
-  const clientLine = wrapTextToLines(
-    `CLIENTE: ${info.client || "—"}`,
-    clientFs,
-    innerW,
-    1,
-  )[0] ?? "";
+  const clientText = `CLIENTE: ${info.client || "—"}`;
+  const clientFs = fitFontSize(clientText, 3.6, innerW, 3.5, false);
   primitives.push({
     type: "text",
-    text: clientLine,
+    text: fitTextToWidth(clientText, clientFs, innerW, false),
     x: x + pad,
     y: y1 + 8.0,
     fontSize: clientFs,
@@ -150,16 +140,11 @@ export function drawTitleBlock(
   });
 
   // --- Título do desenho / elemento (títulos curtos + wrap) ---
-  const titleFs = 4.0;
-  const titleLines = wrapTextToLines(
-    info.drawingTitle.toUpperCase(),
-    titleFs,
-    innerW,
-    1,
-  );
+  const drawingTitle = info.drawingTitle.toUpperCase();
+  const titleFs = fitFontSize(drawingTitle, 4.0, innerW);
   primitives.push({
     type: "text",
-    text: titleLines[0] ?? "",
+    text: fitTextToWidth(drawingTitle, titleFs, innerW),
     x: x + pad,
     y: y2 + 3.5,
     fontSize: titleFs,
@@ -170,10 +155,10 @@ export function drawTitleBlock(
   });
   primitives.push({
     type: "text",
-    text: fitTextToWidth(`ELEMENTO: ${info.elementRef}`, 3.8, innerW),
+    text: fitTextToWidth(`ELEMENTO: ${info.elementRef}`, fitFontSize(`ELEMENTO: ${info.elementRef}`, 3.8, innerW), innerW),
     x: x + pad,
     y: y2 + 8.0,
-    fontSize: 3.8,
+    fontSize: fitFontSize(`ELEMENTO: ${info.elementRef}`, 3.8, innerW),
     align: "left",
     baseline: "middle",
     color: "#000000",
@@ -242,7 +227,7 @@ export function drawTitleBlock(
       baseline: "middle",
       color: "#666666",
     });
-    const vfs = fitFontSize(cell.value, 4.8, cell.w, 3.2);
+    const vfs = fitFontSize(cell.value, 4.8, cell.w);
     primitives.push({
       type: "text",
       text: fitTextToWidth(cell.value, vfs, cell.w),

@@ -5,7 +5,7 @@ import type {
 } from "../core/types";
 import { drawSheetBorders } from "./sheetBorders";
 import { drawTitleBlock } from "./drawTitleBlock";
-import { fitFontSize, fitTextToWidth } from "../core/textFit";
+import { fitFontSize, fitTextToWidth, wrapTextToLines } from "../core/textFit";
 import type { ProjectTakeoffSummary } from "../../structural-engine/takeoff/types";
 
 export interface GeneralElementRow {
@@ -23,39 +23,13 @@ export interface GeneralSheetInput {
   notes?: string[];
 }
 
-/** Quebra texto em linhas que cabem em maxWidthMm. */
-function wrapLines(text: string, fontSizeMm: number, maxWidthMm: number, maxLines = 4): string[] {
-  const words = text.trim().split(/\s+/).filter(Boolean);
-  if (words.length === 0) return [];
-  const lines: string[] = [];
-  let cur = "";
-  for (const w of words) {
-    const trial = cur ? `${cur} ${w}` : w;
-    if (estimateWidth(trial, fontSizeMm) <= maxWidthMm) {
-      cur = trial;
-    } else {
-      if (cur) lines.push(cur);
-      cur = w;
-      if (lines.length >= maxLines - 1) break;
-    }
-  }
-  if (cur && lines.length < maxLines) {
-    lines.push(fitTextToWidth(cur, fontSizeMm, maxWidthMm));
-  }
-  return lines;
-}
-
-function estimateWidth(text: string, fontSizeMm: number): number {
-  return text.length * fontSizeMm * 0.55;
-}
-
 export function drawGeneralSheet(input: GeneralSheetInput): A4Sheet {
   const { titleInfo, elements, takeoffSummary } = input;
   const primitives: DrawingPrimitive[] = [];
 
   primitives.push(...drawSheetBorders());
 
-  const headerBox = { x: 22, y: 12, width: 263, height: 18 };
+  const headerBox = { x: 22, y: 12, width: 263, height: 22 };
   primitives.push({
     type: "rect",
     x: headerBox.x,
@@ -72,50 +46,55 @@ export function drawGeneralSheet(input: GeneralSheetInput): A4Sheet {
       type: "image",
       dataUri: titleInfo.companyLogoBase64,
       x: headerBox.x + 3,
-      y: headerBox.y + 2,
+      y: headerBox.y + 3,
       width: 32,
-      height: 14,
+      height: 16,
     });
   }
 
   const titleX = titleInfo.companyLogoBase64 ? headerBox.x + 40 : headerBox.x + 6;
   const titleMaxW = headerBox.x + headerBox.width - titleX - 4;
+  const titleText = "CADERNO DE PRANCHAS — FUNDAÇÕES (ESQUEMÁTICO)";
+  const titleFs = fitFontSize(titleText, 6.5, titleMaxW);
   primitives.push({
     type: "text",
-    text: fitTextToWidth("CADERNO DE PRANCHAS — FUNDAÇÕES (ESQUEMÁTICO)", 6.5, titleMaxW),
+    text: fitTextToWidth(titleText, titleFs, titleMaxW),
     x: titleX,
     y: headerBox.y + 5.5,
-    fontSize: 6.5,
+    fontSize: titleFs,
     align: "left",
     baseline: "middle",
     color: "#7A5820",
     bold: true,
   });
-  primitives.push({
-    type: "text",
-    text: fitTextToWidth(
-      `OBRA: ${(titleInfo.projectName || "—").toUpperCase()}  |  CLIENTE: ${titleInfo.client || "—"}  |  LOCAL: ${titleInfo.location || "—"}`,
-      4.8,
-      titleMaxW,
-    ),
-    x: titleX,
-    y: headerBox.y + 12.5,
-    fontSize: 4.8,
-    align: "left",
-    baseline: "middle",
-    color: "#444444",
+  const headerLines = [
+    `OBRA: ${(titleInfo.projectName || "—").toUpperCase()}${titleInfo.projectCode ? `  (${titleInfo.projectCode})` : ""}`,
+    `CLIENTE: ${titleInfo.client || "—"}   |   LOCAL: ${titleInfo.location || "—"}`,
+  ];
+  headerLines.forEach((line, i) => {
+    const fs = fitFontSize(line, 4.4, titleMaxW, 3.5, false);
+    primitives.push({
+      type: "text",
+      text: fitTextToWidth(line, fs, titleMaxW, false),
+      x: titleX,
+      y: headerBox.y + 12 + i * 6,
+      fontSize: fs,
+      align: "left",
+      baseline: "middle",
+      color: "#444444",
+    });
   });
 
   const blockCount = elements.filter((e) => /bloco/i.test(e.kind) || /bloco/i.test(e.elementRef)).length;
   const pileCount = elements.filter((e) => /estaca/i.test(e.kind) || /estaca/i.test(e.elementRef)).length;
   const otherCount = elements.length - blockCount - pileCount;
 
-  const tableBox = { x: 22, y: 34, width: 145, height: 0 };
+  const tableBox = { x: 22, y: 38, width: 150, height: 0 };
   const thHeight = 5.2;
-  const trHeight = Math.min(4.5, Math.max(3.5, 68 / Math.max(6, elements.length + 2)));
-  const maxTableH = 88;
-  const neededH = thHeight + trHeight * (1 + Math.min(elements.length, 16));
-  tableBox.height = Math.min(maxTableH, Math.max(26, neededH));
+  const trHeight = 5.0;
+  const maxTableH = 92;
+  const neededH = thHeight + trHeight * (1 + elements.length);
+  tableBox.height = Math.min(maxTableH, neededH);
 
   primitives.push({
     type: "rect",
@@ -136,17 +115,17 @@ export function drawGeneralSheet(input: GeneralSheetInput): A4Sheet {
       : `QUADRO GERAL (${elements.length} item(ns))`;
   primitives.push({
     type: "text",
-    text: fitTextToWidth(quadroTitle, 5.2, tableBox.width - 4),
+    text: fitTextToWidth(quadroTitle, 4.8, tableBox.width - 4),
     x: tableBox.x + tableBox.width / 2,
     y: tableBox.y + thHeight / 2,
-    fontSize: 5.2,
+    fontSize: 4.8,
     align: "center",
     baseline: "middle",
     color: "#7A5820",
     bold: true,
   });
 
-  const tColW = [28, 36, 36, 22, 23];
+  const tColW = [37, 38, 31, 19, 25];
   const tColX = [
     tableBox.x,
     tableBox.x + tColW[0]!,
@@ -155,7 +134,7 @@ export function drawGeneralSheet(input: GeneralSheetInput): A4Sheet {
     tableBox.x + tColW[0]! + tColW[1]! + tColW[2]! + tColW[3]!,
   ];
 
-  const colHeaders = ["ELEMENTO", "TIPO", "DIMENSÕES", "Nk", "PRANCHA"];
+  const colHeaders = ["ELEMENTO", "TIPO", "DIMENSÕES", "N (kN)", "PRANCHA"];
   let curY = tableBox.y + thHeight;
 
   primitives.push({
@@ -175,7 +154,7 @@ export function drawGeneralSheet(input: GeneralSheetInput): A4Sheet {
       text: h,
       x: tColX[i]! + tColW[i]! / 2,
       y: curY + trHeight / 2,
-      fontSize: 4.0,
+      fontSize: fitFontSize(h, 4.0, tColW[i]! - 1.5),
       align: "center",
       baseline: "middle",
       color: "#333333",
@@ -187,7 +166,7 @@ export function drawGeneralSheet(input: GeneralSheetInput): A4Sheet {
 
   let omitted = 0;
   elements.forEach((el, index) => {
-    if (curY + trHeight > tableBox.y + tableBox.height - 0.5) {
+    if (curY + trHeight > tableBox.y + tableBox.height + 1e-6) {
       omitted++;
       return;
     }
@@ -211,11 +190,11 @@ export function drawGeneralSheet(input: GeneralSheetInput): A4Sheet {
     ];
 
     rowValues.forEach((val, i) => {
-      const colW = tColW[i]! - 1.2;
-      const fs = fitFontSize(val, 4.0, colW, 3.0);
+      const colW = tColW[i]! - 1.5;
+      const fs = fitFontSize(val, 4.0, colW, 3.5, false);
       primitives.push({
         type: "text",
-        text: fitTextToWidth(val, fs, colW),
+        text: fitTextToWidth(val, fs, colW, false),
         x: tColX[i]! + tColW[i]! / 2,
         y: curY + trHeight / 2,
         fontSize: fs,
@@ -251,15 +230,8 @@ export function drawGeneralSheet(input: GeneralSheetInput): A4Sheet {
     });
   }
 
-  const notesTop = Math.max(118, curY + (omitted > 0 ? 8 : 6));
-  const notesBox = {
-    x: 22,
-    y: notesTop,
-    width: 145,
-    height: Math.max(18, 150 - notesTop),
-  };
-  // Carimbo começa ~152; notas não podem invadir.
-  notesBox.height = Math.min(notesBox.height, 150 - notesBox.y);
+  const notesTop = Math.max(132, curY + (omitted > 0 ? 8 : 6));
+  const notesBox = { x: 22, y: notesTop, width: 150, height: 198 - notesTop };
 
   primitives.push({
     type: "rect",
@@ -276,7 +248,7 @@ export function drawGeneralSheet(input: GeneralSheetInput): A4Sheet {
     type: "text",
     text: "NOTAS / ESCOPO",
     x: notesBox.x + 3,
-    y: notesBox.y + 3.5,
+    y: notesBox.y + 4,
     fontSize: 4.8,
     align: "left",
     baseline: "middle",
@@ -286,34 +258,45 @@ export function drawGeneralSheet(input: GeneralSheetInput): A4Sheet {
 
   const defaultNotes = [
     "Desenhos esquemáticos STARKX — não substituem prancha executiva nem ART.",
-    "Cada pilar com carga tem prancha de bloco; estaca típica é compartilhada.",
+    "Cada pilar com carga tem a sua prancha; a estaca típica é compartilhada.",
     "Pilar não apoia no fuste: há bloco de coroamento (1E ou mais).",
     "STARKX — software livre (AGPL-3.0). Pré-dimensionamento: conferir antes de executar.",
   ];
   const notes = [...defaultNotes, ...(input.notes ?? [])];
-  let ny = notesBox.y + 8;
-  const noteFs = 3.8;
-  const noteMaxW = notesBox.width - 6;
-  for (const note of notes) {
-    const lines = wrapLines(`• ${note}`, noteFs, noteMaxW, 3);
-    for (const line of lines) {
-      if (ny > notesBox.y + notesBox.height - 3) break;
+  const noteMaxW = notesBox.width - 9;
+  const notesBottom = notesBox.y + notesBox.height - 2.5;
+  // Corpo único para todas as notas: o maior que faça todas caberem na caixa.
+  let noteFs = 3.8;
+  const linesFor = (fs: number) =>
+    notes.map((n) => wrapTextToLines(n, fs, noteMaxW, 3, false));
+  let wrapped = linesFor(noteFs);
+  const heightFor = (w: string[][], fs: number) =>
+    w.reduce((h, l) => h + l.length * (fs + 0.9) + 0.6, 0);
+  while (noteFs > 3.5 && notesBox.y + 9 + heightFor(wrapped, noteFs) > notesBottom) {
+    noteFs = Number((noteFs - 0.1).toFixed(1));
+    wrapped = linesFor(noteFs);
+  }
+  let ny = notesBox.y + 9.5;
+  for (const lines of wrapped) {
+    if (ny + noteFs * 0.4 > notesBottom) break;
+    lines.forEach((line, i) => {
+      if (ny + noteFs * 0.4 > notesBottom) return;
       primitives.push({
         type: "text",
-        text: line,
-        x: notesBox.x + 3,
+        text: i === 0 ? `• ${line}` : line,
+        x: notesBox.x + (i === 0 ? 3 : 6),
         y: ny,
         fontSize: noteFs,
         align: "left",
         baseline: "middle",
         color: "#333333",
       });
-      ny += 4.2;
-    }
-    if (ny > notesBox.y + notesBox.height - 3) break;
+      ny += noteFs + 0.9;
+    });
+    ny += 0.6;
   }
 
-  const qtyBox = { x: 172, y: 34, width: 113, height: 108 };
+  const qtyBox = { x: 177, y: 38, width: 108, height: 108 };
   primitives.push({
     type: "rect",
     x: qtyBox.x,

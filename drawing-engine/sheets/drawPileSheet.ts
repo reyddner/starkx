@@ -5,7 +5,7 @@ import type {
 } from "../core/types";
 import { createLinearDimension } from "../core/dimensionHelper";
 import { createModelToSheetTransform, selectBestScale } from "../core/autoScale";
-import { fitTextToWidth } from "../core/textFit";
+import { fitTextToWidth, MIN_FONT_MM } from "../core/textFit";
 import { drawPileLongSection } from "./pile/drawPileLongSection";
 import { drawRebarShape } from "../rebars/rebarShapeDrafter";
 import { extractRebarShapes } from "../rebars/rebarExtractor";
@@ -186,8 +186,8 @@ export function drawPileSheet(input: PileSheetInput): A4Sheet {
       type: "text",
       text: "* escala c/ quebra",
       x: secBox.x + 1,
-      y: secBox.y + secBox.height - 7,
-      fontSize: 3.0,
+      y: secBox.y + secBox.height - 7.5,
+      fontSize: MIN_FONT_MM,
       align: "left",
       baseline: "middle",
       color: "#888888",

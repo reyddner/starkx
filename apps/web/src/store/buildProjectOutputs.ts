@@ -7,7 +7,8 @@ import type { DrawingBookInput } from '@drawing'
 import { aggregateProjectTakeoff, computeFootingTakeoff } from '@structural/takeoff'
 import type { ElementTakeoff } from '@structural/takeoff'
 import type { StructuralDesignResult } from '@structural/design'
-import type { FootingDesignResult } from '@footing/index'
+import { designFooting } from '@footing/index'
+import type { FootingDesignInput, FootingDesignResult } from '@footing/index'
 import {
   columnToLoad,
   type ColumnRecord,
@@ -43,6 +44,11 @@ export interface ProjectOutputsSource {
   blockResult: BlockDesignResult | null
   structural: StructuralDesignResult | null
   footingResult: FootingDesignResult | null
+  /**
+   * Parâmetros da sapata sem as cargas do pilar. Com eles, cada pilar recebe a
+   * sapata da sua própria carga; sem eles, todos repetem `footingResult`.
+   */
+  footingDesignBase?: FootingDesignBase | null
   fck_MPa: number | null
   fyk_MPa: number
   /** Tipo de estaca (espaçamento mínimo do grupo); opcional. */
@@ -52,6 +58,11 @@ export interface ProjectOutputsSource {
   cover_mm: number
   designLoad_kN: number | null
 }
+
+export type FootingDesignBase = Omit<
+  FootingDesignInput,
+  'Nk_kN' | 'Mx_kNm' | 'My_kNm' | 'columnWidth_m' | 'columnDepth_m'
+>
 
 export interface ColumnBlockOutput {
   columnId: string
@@ -77,6 +88,26 @@ export interface ProjectOutputs {
   drawingInput: DrawingBookInput
   takeoffElements: ElementTakeoff[]
   validation: ProjectOutputsValidation
+}
+
+/** Sapata do pilar: o ativo usa o resultado já calculado; os demais, a própria carga. */
+function footingForColumn(s: ProjectOutputsSource, col: ColumnRecord): FootingDesignResult {
+  const active = s.footingResult!
+  if (!s.footingDesignBase || col.id === s.activeColumnId || !(col.N_kN != null && col.N_kN > 0)) {
+    return active
+  }
+  try {
+    return designFooting({
+      ...s.footingDesignBase,
+      Nk_kN: col.N_kN,
+      Mx_kNm: col.Mx_kNm ?? undefined,
+      My_kNm: col.My_kNm ?? undefined,
+      columnWidth_m: col.columnWidth_m,
+      columnDepth_m: col.columnDepth_m,
+    })
+  } catch {
+    return active
+  }
 }
 
 function columnsWithLoad(columns: ColumnRecord[]): ColumnRecord[] {
@@ -244,6 +275,7 @@ export function buildProjectOutputs(s: ProjectOutputsSource): ProjectOutputs {
     // Corte mostra o L real (limitado visualmente no sheet, mas cotado).
     pileShaftLength_m: tipDepth_m,
     ref: `Bloco ${cb.columnLabel}`,
+    columnLoad_kN: cb.N_kN,
     takeoff: cb.block.takeoff
       ? { ...cb.block.takeoff, elementRef: `Bloco ${cb.columnLabel}` }
       : undefined,
@@ -281,12 +313,13 @@ export function buildProjectOutputs(s: ProjectOutputsSource): ProjectOutputs {
       ? columnsWithLoad(s.columns)
       : s.columns.slice(0, 1)) {
       const label = col.columnLabel || 'S-01'
-      const r = s.footingResult
+      const r = footingForColumn(s, col)
       footings.push({
         result: r,
         pierWidth_m: col.columnWidth_m ?? 0.3,
         pierLength_m: col.columnDepth_m ?? 0.5,
         ref: `Sapata ${label}`,
+        columnLoad_kN: col.N_kN ?? undefined,
         takeoff:
           r.rebar != null
             ? computeFootingTakeoff({
@@ -343,10 +376,7 @@ export function buildProjectOutputs(s: ProjectOutputsSource): ProjectOutputs {
     footings,
     takeoffSummary,
     generalNotes: validation.ok
-      ? [
-          'Caderno esquemático STARKX — não substitui prancha executiva nem ART.',
-          validation.messages[0] ?? '',
-        ].filter(Boolean)
+      ? [validation.messages[0] ?? ''].filter(Boolean)
       : [
           'ATENÇÃO: caderno incompleto.',
           ...validation.messages,
