@@ -1,0 +1,45 @@
+node_modules/
+dist/
+apps/web/dist/
+apps/web/node_modules/
+*.log
+.DS_Store
+.env
+.env.*
+!.env.example
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+coverage/
+*.local
+.turbo/
+_extract_*.txt
+*.xls
+*.xlsx
+!fixtures/**/*.xlsx
+.vscode/
+.idea/
+.vercel
+
+# --- baseline (Claude) ---
+.next/
+.nuxt/
+.venv/
+venv/
+__pycache__/
+.mypy_cache/
+.pytest_cache/
+*.pyc
+!.env.sample
+*.pem
+*.key
+*.pfx
+Thumbs.db
+
+# excluídos pelo scan (grande/sensível)
+.BLOQUEADO_SEGREDO
+
+# auditoria: relatórios gerados (o check.py é versionado)
+.audit/report.*
+.audit/_*

@@ -1,0 +1,6 @@
+{
+  "name": "@starkx/block-engine",
+  "private": true,
+  "type": "module",
+  "main": "index.ts"
+}

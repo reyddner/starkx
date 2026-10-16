@@ -1,0 +1,27 @@
+{
+  "name": "starkx",
+  "version": "0.1.0",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "typecheck": "tsc --noEmit",
+    "dev": "npm run dev --prefix apps/web",
+    "build:web": "npm run build --prefix apps/web",
+    "ci": "npm test && npm run typecheck && npm run build:web && npm run test:e2e"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^22.20.2",
+    "typescript": "~6.0.2",
+    "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "@pdf-lib/fontkit": "^1.1.1",
+    "exceljs": "^4.4.0",
+    "pdf-lib": "^1.17.1"
+  }
+}

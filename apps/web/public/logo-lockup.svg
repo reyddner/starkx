@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 64" fill="none" role="img" aria-label="STARKX">
+  <!-- Mark -->
+  <g transform="translate(0,0)">
+    <rect width="64" height="64" rx="12" fill="#2F2F30"/>
+    <path
+      d="M32 8 L48 16 V36 C48 46 40 52 32 56 C24 52 16 46 16 36 V16 Z"
+      fill="#7A5820"
+      stroke="#C9A15B"
+      stroke-width="1.5"
+    />
+    <rect x="28" y="14" width="8" height="34" rx="2" fill="#2F2F30" opacity="0.35"/>
+    <rect x="29.5" y="15.5" width="5" height="31" rx="1.5" fill="#C9A15B" opacity="0.85"/>
+    <path d="M22 22 L42 44" stroke="#C9A15B" stroke-width="3.2" stroke-linecap="round"/>
+    <path d="M42 22 L22 44" stroke="#F2EFE8" stroke-width="3.2" stroke-linecap="round" opacity="0.95"/>
+    <path d="M38 40 L46 48" stroke="#A07838" stroke-width="2" stroke-linecap="round"/>
+  </g>
+  <!-- Wordmark -->
+  <text
+    x="80"
+    y="42"
+    font-family="Cinzel, Garamond, serif"
+    font-size="32"
+    font-weight="700"
+    letter-spacing="0.08em"
+  >
+    <tspan fill="#7A5820">STARK</tspan><tspan fill="#2F2F30">X</tspan>
+  </text>
+</svg>

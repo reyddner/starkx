@@ -1,0 +1,1120 @@
+{
+  "description": "Casos de referência calculados pelo oráculo tools/reference/pile_capacity.py (fórmulas publicadas). Gerado por tools/reference/build_fixtures.py — não editar à mão.",
+  "cases": [
+    {
+      "id": "ref-escavada-30",
+      "title": "Exemplo — estaca escavada Ø30 cm × 8 m (o exemplo do app)",
+      "input": {
+        "pileTypeId": 6,
+        "diameterCm": 30,
+        "tipDepth_m": 8,
+        "layers": [
+          {
+            "depth_m": 1,
+            "nspt": 3,
+            "soilTypeId": 11
+          },
+          {
+            "depth_m": 2,
+            "nspt": 4,
+            "soilTypeId": 11
+          },
+          {
+            "depth_m": 3,
+            "nspt": 6,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 4,
+            "nspt": 8,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 5,
+            "nspt": 10,
+            "soilTypeId": 9
+          },
+          {
+            "depth_m": 6,
+            "nspt": 13,
+            "soilTypeId": 9
+          },
+          {
+            "depth_m": 7,
+            "nspt": 16,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 8,
+            "nspt": 20,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 9,
+            "nspt": 24,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 10,
+            "nspt": 28,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 11,
+            "nspt": 33,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 12,
+            "nspt": 38,
+            "soilTypeId": 7
+          }
+        ]
+      },
+      "expected": {
+        "methods": {
+          "aoki_velloso": {
+            "Rp_kN": 259.18139392115796,
+            "Rl_acum_kN": 128.34348467710382,
+            "Rult_kN": 387.5248785982618,
+            "Padm_kN": 193.7624392991309
+          },
+          "decourt_quaresma": {
+            "Rp_kN": 212.05750411731105,
+            "Rl_acum_kN": 184.35912888816102,
+            "Rult_kN": 396.4166330054721,
+            "Padm_kN": 194.8290905586824
+          },
+          "teixeira": {
+            "Rp_kN": 203.5752039526186,
+            "Rl_acum_kN": 305.3628059289279,
+            "Rult_kN": 508.9380098815465,
+            "Padm_kN": 254.46900494077326
+          }
+        },
+        "averagePadm_kN": 214.35351159952884,
+        "minimumPadm_kN": 193.7624392991309
+      }
+    },
+    {
+      "id": "helice-40",
+      "title": "Hélice contínua Ø40 × 10 m",
+      "input": {
+        "pileTypeId": 11,
+        "diameterCm": 40,
+        "tipDepth_m": 10,
+        "layers": [
+          {
+            "depth_m": 1,
+            "nspt": 3,
+            "soilTypeId": 11
+          },
+          {
+            "depth_m": 2,
+            "nspt": 4,
+            "soilTypeId": 11
+          },
+          {
+            "depth_m": 3,
+            "nspt": 6,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 4,
+            "nspt": 8,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 5,
+            "nspt": 10,
+            "soilTypeId": 9
+          },
+          {
+            "depth_m": 6,
+            "nspt": 13,
+            "soilTypeId": 9
+          },
+          {
+            "depth_m": 7,
+            "nspt": 16,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 8,
+            "nspt": 20,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 9,
+            "nspt": 24,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 10,
+            "nspt": 28,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 11,
+            "nspt": 33,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 12,
+            "nspt": 38,
+            "soilTypeId": 7
+          }
+        ]
+      },
+      "expected": {
+        "methods": {
+          "aoki_velloso": {
+            "Rp_kN": 967.6105373056564,
+            "Rl_acum_kN": 454.35597911807747,
+            "Rult_kN": 1421.966516423734,
+            "Padm_kN": 710.983258211867
+          },
+          "decourt_quaresma": {
+            "Rp_kN": 267.0353755551324,
+            "Rl_acum_kN": 513.1268000863329,
+            "Rult_kN": 780.1621756414653,
+            "Padm_kN": 390.08108782073265
+          },
+          "teixeira": {
+            "Rp_kN": 522.7610175573416,
+            "Rl_acum_kN": 668.530916683908,
+            "Rult_kN": 1191.2919342412497,
+            "Padm_kN": 595.6459671206248
+          }
+        },
+        "averagePadm_kN": 565.5701043844082,
+        "minimumPadm_kN": 390.08108782073265
+      }
+    },
+    {
+      "id": "franki-40",
+      "title": "Franki Ø40 × 7 m, base 180 L",
+      "input": {
+        "pileTypeId": 9,
+        "diameterCm": 40,
+        "tipDepth_m": 7,
+        "enlargedBaseVolumeLiters": 180,
+        "layers": [
+          {
+            "depth_m": 1,
+            "nspt": 3,
+            "soilTypeId": 11
+          },
+          {
+            "depth_m": 2,
+            "nspt": 4,
+            "soilTypeId": 11
+          },
+          {
+            "depth_m": 3,
+            "nspt": 6,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 4,
+            "nspt": 8,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 5,
+            "nspt": 10,
+            "soilTypeId": 9
+          },
+          {
+            "depth_m": 6,
+            "nspt": 13,
+            "soilTypeId": 9
+          },
+          {
+            "depth_m": 7,
+            "nspt": 16,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 8,
+            "nspt": 20,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 9,
+            "nspt": 24,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 10,
+            "nspt": 28,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 11,
+            "nspt": 33,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 12,
+            "nspt": 38,
+            "soilTypeId": 7
+          }
+        ]
+      },
+      "expected": {
+        "methods": {
+          "aoki_velloso": {
+            "Rp_kN": 1356.6936742041066,
+            "Rl_acum_kN": 144.52834170986773,
+            "Rult_kN": 1501.2220159139742,
+            "Padm_kN": 750.6110079569871
+          },
+          "decourt_quaresma": {
+            "Rp_kN": 1573.8160519886653,
+            "Rl_acum_kN": 269.75808918824356,
+            "Rult_kN": 1843.5741411769088,
+            "Padm_kN": 600.9602354496614
+          },
+          "teixeira": {
+            "Rp_kN": 1173.6171130544049,
+            "Rl_acum_kN": 383.27430373795477,
+            "Rult_kN": 1556.8914167923597,
+            "Padm_kN": 778.4457083961798
+          }
+        },
+        "averagePadm_kN": 710.0056506009428,
+        "minimumPadm_kN": 600.9602354496614
+      }
+    },
+    {
+      "id": "metalica-tr50",
+      "title": "Metálica TR 50 × 9 m",
+      "input": {
+        "pileTypeId": 4,
+        "diameterCm": 20,
+        "tipDepth_m": 9,
+        "areaCm2": 64.2,
+        "perimeterCm": 52,
+        "layers": [
+          {
+            "depth_m": 1,
+            "nspt": 3,
+            "soilTypeId": 11
+          },
+          {
+            "depth_m": 2,
+            "nspt": 4,
+            "soilTypeId": 11
+          },
+          {
+            "depth_m": 3,
+            "nspt": 6,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 4,
+            "nspt": 8,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 5,
+            "nspt": 10,
+            "soilTypeId": 9
+          },
+          {
+            "depth_m": 6,
+            "nspt": 13,
+            "soilTypeId": 9
+          },
+          {
+            "depth_m": 7,
+            "nspt": 16,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 8,
+            "nspt": 20,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 9,
+            "nspt": 24,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 10,
+            "nspt": 28,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 11,
+            "nspt": 33,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 12,
+            "nspt": 38,
+            "soilTypeId": 7
+          }
+        ]
+      },
+      "expected": {
+        "methods": {
+          "aoki_velloso": {
+            "Rp_kN": 48.42514285714286,
+            "Rl_acum_kN": 164.53691428571432,
+            "Rult_kN": 212.9620571428572,
+            "Padm_kN": 106.4810285714286
+          },
+          "decourt_quaresma": {
+            "Rp_kN": 38.52,
+            "Rl_acum_kN": 178.28571428571428,
+            "Rult_kN": 216.8057142857143,
+            "Padm_kN": 108.40285714285714
+          },
+          "teixeira": {
+            "Rp_kN": 40.0608,
+            "Rl_acum_kN": 218.4,
+            "Rult_kN": 258.4608,
+            "Padm_kN": 129.2304
+          }
+        },
+        "averagePadm_kN": 114.70476190476192,
+        "minimumPadm_kN": 106.4810285714286
+      }
+    },
+    {
+      "id": "centrifugada-33",
+      "title": "Pré-moldada centrifugada Ø33 × 9 m (F1 = 1 + D/0,8)",
+      "input": {
+        "pileTypeId": 2,
+        "diameterCm": 33,
+        "tipDepth_m": 9,
+        "layers": [
+          {
+            "depth_m": 1,
+            "nspt": 3,
+            "soilTypeId": 11
+          },
+          {
+            "depth_m": 2,
+            "nspt": 4,
+            "soilTypeId": 11
+          },
+          {
+            "depth_m": 3,
+            "nspt": 6,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 4,
+            "nspt": 8,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 5,
+            "nspt": 10,
+            "soilTypeId": 9
+          },
+          {
+            "depth_m": 6,
+            "nspt": 13,
+            "soilTypeId": 9
+          },
+          {
+            "depth_m": 7,
+            "nspt": 16,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 8,
+            "nspt": 20,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 9,
+            "nspt": 24,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 10,
+            "nspt": 28,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 11,
+            "nspt": 33,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 12,
+            "nspt": 38,
+            "soilTypeId": 7
+          }
+        ]
+      },
+      "expected": {
+        "methods": {
+          "aoki_velloso": {
+            "Rp_kN": 799.287895165001,
+            "Rl_acum_kN": 406.4184446186557,
+            "Rult_kN": 1205.7063397836569,
+            "Padm_kN": 602.8531698918284
+          },
+          "decourt_quaresma": {
+            "Rp_kN": 513.1791599638927,
+            "Rl_acum_kN": 355.4487688061595,
+            "Rult_kN": 868.6279287700522,
+            "Padm_kN": 401.7169198418651
+          },
+          "teixeira": {
+            "Rp_kN": 489.2307991655778,
+            "Rl_acum_kN": 435.4247417875454,
+            "Rult_kN": 924.6555409531231,
+            "Padm_kN": 462.32777047656157
+          }
+        },
+        "averagePadm_kN": 488.9659534034184,
+        "minimumPadm_kN": 401.7169198418651
+      }
+    },
+    {
+      "id": "raiz-25-areia",
+      "title": "Raiz Ø25 × 10 m em areia",
+      "input": {
+        "pileTypeId": 10,
+        "diameterCm": 25,
+        "tipDepth_m": 10,
+        "layers": [
+          {
+            "depth_m": 1,
+            "nspt": 5,
+            "soilTypeId": 2
+          },
+          {
+            "depth_m": 2,
+            "nspt": 7,
+            "soilTypeId": 2
+          },
+          {
+            "depth_m": 3,
+            "nspt": 9,
+            "soilTypeId": 1
+          },
+          {
+            "depth_m": 4,
+            "nspt": 12,
+            "soilTypeId": 1
+          },
+          {
+            "depth_m": 5,
+            "nspt": 15,
+            "soilTypeId": 1
+          },
+          {
+            "depth_m": 6,
+            "nspt": 18,
+            "soilTypeId": 1
+          },
+          {
+            "depth_m": 7,
+            "nspt": 22,
+            "soilTypeId": 1
+          },
+          {
+            "depth_m": 8,
+            "nspt": 26,
+            "soilTypeId": 1
+          },
+          {
+            "depth_m": 9,
+            "nspt": 30,
+            "soilTypeId": 1
+          },
+          {
+            "depth_m": 10,
+            "nspt": 35,
+            "soilTypeId": 1
+          },
+          {
+            "depth_m": 11,
+            "nspt": 42,
+            "soilTypeId": 1
+          },
+          {
+            "depth_m": 12,
+            "nspt": 48,
+            "soilTypeId": 1
+          }
+        ]
+      },
+      "expected": {
+        "methods": {
+          "aoki_velloso": {
+            "Rp_kN": 859.029241215959,
+            "Rl_acum_kN": 496.764338348886,
+            "Rult_kN": 1355.793579564845,
+            "Padm_kN": 677.8967897824225
+          },
+          "decourt_quaresma": {
+            "Rp_kN": 350.15668118136233,
+            "Rl_acum_kN": 574.3224069843841,
+            "Rult_kN": 924.4790881657464,
+            "Padm_kN": 462.2395440828732
+          },
+          "teixeira": {
+            "Rp_kN": 414.7884050442774,
+            "Rl_acum_kN": 843.5176274888595,
+            "Rult_kN": 1258.3060325331369,
+            "Padm_kN": 629.1530162665684
+          }
+        },
+        "averagePadm_kN": 589.7631167106214,
+        "minimumPadm_kN": 462.2395440828732
+      }
+    },
+    {
+      "id": "escavada-50-areia",
+      "title": "Escavada Ø50 × 9 m em areia (janela de ponta de Teixeira com 4D)",
+      "input": {
+        "pileTypeId": 6,
+        "diameterCm": 50,
+        "tipDepth_m": 9,
+        "layers": [
+          {
+            "depth_m": 1,
+            "nspt": 5,
+            "soilTypeId": 2
+          },
+          {
+            "depth_m": 2,
+            "nspt": 7,
+            "soilTypeId": 2
+          },
+          {
+            "depth_m": 3,
+            "nspt": 9,
+            "soilTypeId": 1
+          },
+          {
+            "depth_m": 4,
+            "nspt": 12,
+            "soilTypeId": 1
+          },
+          {
+            "depth_m": 5,
+            "nspt": 15,
+            "soilTypeId": 1
+          },
+          {
+            "depth_m": 6,
+            "nspt": 18,
+            "soilTypeId": 1
+          },
+          {
+            "depth_m": 7,
+            "nspt": 22,
+            "soilTypeId": 1
+          },
+          {
+            "depth_m": 8,
+            "nspt": 26,
+            "soilTypeId": 1
+          },
+          {
+            "depth_m": 9,
+            "nspt": 30,
+            "soilTypeId": 1
+          },
+          {
+            "depth_m": 10,
+            "nspt": 35,
+            "soilTypeId": 1
+          },
+          {
+            "depth_m": 11,
+            "nspt": 42,
+            "soilTypeId": 1
+          },
+          {
+            "depth_m": 12,
+            "nspt": 48,
+            "soilTypeId": 1
+          }
+        ]
+      },
+      "expected": {
+        "methods": {
+          "aoki_velloso": {
+            "Rp_kN": 1963.4954084936207,
+            "Rl_acum_kN": 534.0707511102648,
+            "Rult_kN": 2497.5661596038854,
+            "Padm_kN": 1248.7830798019427
+          },
+          "decourt_quaresma": {
+            "Rp_kN": 1191.1872144861297,
+            "Rl_acum_kN": 333.2332207557745,
+            "Rult_kN": 1524.4204352419042,
+            "Padm_kN": 554.1300503567436
+          },
+          "teixeira": {
+            "Rp_kN": 1378.3737767625216,
+            "Rl_acum_kN": 904.7786842338604,
+            "Rult_kN": 2283.152460996382,
+            "Padm_kN": 1141.576230498191
+          }
+        },
+        "averagePadm_kN": 981.4964535522926,
+        "minimumPadm_kN": 554.1300503567436
+      }
+    },
+    {
+      "id": "decrescente-40",
+      "title": "Escavada Ø40 × 8 m, N decrescente",
+      "input": {
+        "pileTypeId": 6,
+        "diameterCm": 40,
+        "tipDepth_m": 8,
+        "layers": [
+          {
+            "depth_m": 1,
+            "nspt": 25,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 2,
+            "nspt": 22,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 3,
+            "nspt": 18,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 4,
+            "nspt": 15,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 5,
+            "nspt": 12,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 6,
+            "nspt": 10,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 7,
+            "nspt": 8,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 8,
+            "nspt": 6,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 9,
+            "nspt": 5,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 10,
+            "nspt": 5,
+            "soilTypeId": 12
+          }
+        ]
+      },
+      "expected": {
+        "methods": {
+          "aoki_velloso": {
+            "Rp_kN": 87.96459430051421,
+            "Rl_acum_kN": 204.07785877719294,
+            "Rult_kN": 292.04245307770714,
+            "Padm_kN": 146.02122653885357
+          },
+          "decourt_quaresma": {
+            "Rp_kN": 81.17875416876026,
+            "Rl_acum_kN": 446.80428851054836,
+            "Rult_kN": 527.9830426793086,
+            "Padm_kN": 263.9915213396543
+          },
+          "teixeira": {
+            "Rp_kN": 114.35397259066848,
+            "Rl_acum_kN": 583.0795965062656,
+            "Rult_kN": 697.4335690969341,
+            "Padm_kN": 348.71678454846705
+          }
+        },
+        "averagePadm_kN": 252.90984414232494,
+        "minimumPadm_kN": 146.02122653885357
+      }
+    },
+    {
+      "id": "bloco-topo-0.9",
+      "title": "Escavada Ø40, topo a 0,90 m (sob bloco), L = 7,6 m, SPT a cada 0,5 m",
+      "input": {
+        "pileTypeId": 6,
+        "diameterCm": 40,
+        "tipDepth_m": 7.6,
+        "pileTopDepth_m": 0.9,
+        "layers": [
+          {
+            "depth_m": 0.5,
+            "nspt": 3,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 1.0,
+            "nspt": 4,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 1.5,
+            "nspt": 5,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 2.0,
+            "nspt": 6,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 2.5,
+            "nspt": 7,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 3.0,
+            "nspt": 8,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 3.5,
+            "nspt": 9,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 4.0,
+            "nspt": 10,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 4.5,
+            "nspt": 11,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 5.0,
+            "nspt": 12,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 5.5,
+            "nspt": 13,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 6.0,
+            "nspt": 14,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 6.5,
+            "nspt": 15,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 7.0,
+            "nspt": 16,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 7.5,
+            "nspt": 17,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 8.0,
+            "nspt": 18,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 8.5,
+            "nspt": 19,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 9.0,
+            "nspt": 20,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 9.5,
+            "nspt": 21,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 10.0,
+            "nspt": 22,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 10.5,
+            "nspt": 23,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 11.0,
+            "nspt": 24,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 11.5,
+            "nspt": 25,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 12.0,
+            "nspt": 26,
+            "soilTypeId": 7
+          }
+        ]
+      },
+      "expected": {
+        "methods": {
+          "aoki_velloso": {
+            "Rp_kN": 437.7285764001779,
+            "Rl_acum_kN": 207.08541014422957,
+            "Rult_kN": 644.8139865444075,
+            "Padm_kN": 322.40699327220375
+          },
+          "decourt_quaresma": {
+            "Rp_kN": 358.14156250923645,
+            "Rl_acum_kN": 300.0794367755465,
+            "Rult_kN": 658.2209992847829,
+            "Padm_kN": 320.36572660849873
+          },
+          "teixeira": {
+            "Rp_kN": 351.8583772020569,
+            "Rl_acum_kN": 454.39996141522766,
+            "Rult_kN": 806.2583386172846,
+            "Padm_kN": 403.1291693086423
+          }
+        },
+        "averagePadm_kN": 348.6339630631149,
+        "minimumPadm_kN": 320.36572660849873
+      }
+    },
+    {
+      "id": "parametros-usuario",
+      "title": "Parâmetros informados: Aoki ponta 50 %, Décourt α 80 % β 90 %, Teixeira fuste 50 %",
+      "input": {
+        "pileTypeId": 6,
+        "diameterCm": 30,
+        "tipDepth_m": 8,
+        "layers": [
+          {
+            "depth_m": 1,
+            "nspt": 3,
+            "soilTypeId": 11
+          },
+          {
+            "depth_m": 2,
+            "nspt": 4,
+            "soilTypeId": 11
+          },
+          {
+            "depth_m": 3,
+            "nspt": 6,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 4,
+            "nspt": 8,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 5,
+            "nspt": 10,
+            "soilTypeId": 9
+          },
+          {
+            "depth_m": 6,
+            "nspt": 13,
+            "soilTypeId": 9
+          },
+          {
+            "depth_m": 7,
+            "nspt": 16,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 8,
+            "nspt": 20,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 9,
+            "nspt": 24,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 10,
+            "nspt": 28,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 11,
+            "nspt": 33,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 12,
+            "nspt": 38,
+            "soilTypeId": 7
+          }
+        ],
+        "aoki": {
+          "fs": 2,
+          "pctTip": 50,
+          "pctShaft": 100
+        },
+        "decourt": {
+          "alphaPct": 80,
+          "betaPct": 90
+        },
+        "teixeira": {
+          "fs": 2,
+          "pctTip": 100,
+          "pctShaft": 50
+        }
+      },
+      "expected": {
+        "methods": {
+          "aoki_velloso": {
+            "Rp_kN": 129.59069696057898,
+            "Rl_acum_kN": 128.34348467710382,
+            "Rult_kN": 257.9341816376828,
+            "Padm_kN": 128.9670908188414
+          },
+          "decourt_quaresma": {
+            "Rp_kN": 282.7433388230814,
+            "Rl_acum_kN": 233.73449342708062,
+            "Rult_kN": 516.477832250162,
+            "Padm_kN": 250.48159888044773
+          },
+          "teixeira": {
+            "Rp_kN": 203.5752039526186,
+            "Rl_acum_kN": 152.68140296446396,
+            "Rult_kN": 356.25660691708254,
+            "Padm_kN": 178.12830345854127
+          }
+        },
+        "averagePadm_kN": 185.8589977192768,
+        "minimumPadm_kN": 128.9670908188414
+      }
+    },
+    {
+      "id": "atrito-excluido",
+      "title": "Ref. escavada Ø30 com atrito excluído nos 2 primeiros metros",
+      "input": {
+        "pileTypeId": 6,
+        "diameterCm": 30,
+        "tipDepth_m": 8,
+        "layers": [
+          {
+            "depth_m": 1,
+            "nspt": 3,
+            "soilTypeId": 11,
+            "excludeFromShaftFriction": true
+          },
+          {
+            "depth_m": 2,
+            "nspt": 4,
+            "soilTypeId": 11,
+            "excludeFromShaftFriction": true
+          },
+          {
+            "depth_m": 3,
+            "nspt": 6,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 4,
+            "nspt": 8,
+            "soilTypeId": 12
+          },
+          {
+            "depth_m": 5,
+            "nspt": 10,
+            "soilTypeId": 9
+          },
+          {
+            "depth_m": 6,
+            "nspt": 13,
+            "soilTypeId": 9
+          },
+          {
+            "depth_m": 7,
+            "nspt": 16,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 8,
+            "nspt": 20,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 9,
+            "nspt": 24,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 10,
+            "nspt": 28,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 11,
+            "nspt": 33,
+            "soilTypeId": 7
+          },
+          {
+            "depth_m": 12,
+            "nspt": 38,
+            "soilTypeId": 7
+          }
+        ]
+      },
+      "expected": {
+        "methods": {
+          "aoki_velloso": {
+            "Rp_kN": 259.18139392115796,
+            "Rl_acum_kN": 115.1487955320267,
+            "Rult_kN": 374.33018945318463,
+            "Padm_kN": 187.16509472659232
+          },
+          "decourt_quaresma": {
+            "Rp_kN": 212.05750411731105,
+            "Rl_acum_kN": 159.51436698602177,
+            "Rult_kN": 371.5718711033328,
+            "Padm_kN": 175.7177352493445
+          },
+          "teixeira": {
+            "Rp_kN": 203.5752039526186,
+            "Rl_acum_kN": 275.2035164544659,
+            "Rult_kN": 478.7787204070845,
+            "Padm_kN": 239.38936020354225
+          }
+        },
+        "averagePadm_kN": 200.75739672649306,
+        "minimumPadm_kN": 175.7177352493445
+      }
+    }
+  ]
+}

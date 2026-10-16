@@ -1,0 +1,6 @@
+{
+  "name": "@starkx/caisson-engine",
+  "private": true,
+  "type": "module",
+  "main": "index.ts"
+}
