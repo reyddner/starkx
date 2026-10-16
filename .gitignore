@@ -43,3 +43,4 @@ Thumbs.db
 # auditoria: relatórios gerados (o check.py é versionado)
 .audit/report.*
 .audit/_*
+.env*
