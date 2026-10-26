@@ -9,7 +9,10 @@
       "@engine/*": ["../calculation-engine/*"],
       "@domain": ["../domain/index.ts"],
       "@domain/*": ["../domain/*"],
-      "@structural/*": ["../structural-engine/*"]
+      "@structural/*": ["../structural-engine/*"],
+      "pdf-lib": ["node_modules/pdf-lib"],
+      "@pdf-lib/fontkit": ["node_modules/@pdf-lib/fontkit"],
+      "exceljs": ["node_modules/exceljs"]
     }
   },
   "include": ["src/**/*.ts"]

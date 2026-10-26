@@ -1,7 +1,6 @@
 # Identidade Mont Cruz
 
-PNG oficiais copiados em 2026-10-19, sem alteração, da skill somente leitura
-`C:\Users\Vorthys.VORTHYS\.claude\skills\montcruz-identidade\assets\`.
+PNG oficiais da Mont Cruz Engenharia, copiados em 2026-10-19 sem alteração do pacote de identidade visual da empresa.
 
 - `logo_B_horizontal_transparente.png`: cabeçalho XLSX.
 - `simbolo_B_transparente.png`: carimbo PDF.

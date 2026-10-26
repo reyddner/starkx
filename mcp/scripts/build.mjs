@@ -1,11 +1,14 @@
 import { build } from 'esbuild';
 import { mkdir, copyFile } from 'node:fs/promises';
 import { execSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 let commit = 'desconhecido';
 try { commit = execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim(); } catch {}
 await mkdir('dist', { recursive: true });
 await build({
   entryPoints: ['src/server.ts', 'src/tools.ts'], outdir: 'dist', outExtension: { '.js': '.mjs' },
+  // Os motores ficam na raiz do repositório: as dependências deles vêm de mcp/node_modules.
+  nodePaths: [fileURLToPath(new URL('../node_modules', import.meta.url))],
   bundle: true, define: { __STARKX_COMMIT__: JSON.stringify(commit) }, platform: 'node', format: 'esm', target: 'node22',
   // ExcelJS uses its own CommonJS package/assets; resolve the local dependency at runtime.
   external: ['exceljs'],
