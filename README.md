@@ -98,12 +98,26 @@ memorial-engine/      memorial de cálculo (Markdown, HTML, PDF)
 drawing-engine/       pranchas (PDF e SVG)
 domain/               modelo de domínio e adaptadores
 apps/web/             interface (React + Vite)
+mcp/                  servidor MCP (inclui exportação e leitura de IFC4X3)
 tools/reference/      implementação de referência independente (Python) usada nos testes
 tests/, e2e/          testes
 docs/                 métodos, validação e decisões
 ```
 
 Os motores não dependem da interface: podem ser usados em scripts e testes.
+
+## Servidor MCP e IFC
+
+A pasta [`mcp/`](mcp/README.md) tem um servidor MCP com 17 ferramentas sobre os mesmos motores, para usar o
+STARKX pelo Claude Code, pelo Codex ou por outro cliente MCP: cálculo de estaca, grupo, bloco, sapata, tubulão
+e radier, comparação de alternativas, memorial e pranchas em PDF, resumo em XLSX e **IFC4X3**
+(`exportar_ifc` grava IfcPile, IfcFooting, IfcCaissonFoundation, radier e sondagens IfcBorehole com NSPT;
+`importar_sondagem_ifc` lê sondagens de um IFC). O arquivo abre no Bonsai e no FreeCAD.
+
+```sh
+cd mcp && npm ci && npm run build && npm test
+claude mcp add --scope user starkx -- node /caminho/para/starkx/mcp/dist/server.mjs
+```
 
 ## Contribuir
 

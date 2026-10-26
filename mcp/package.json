@@ -1,0 +1,24 @@
+{
+  "name": "starkx-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test test/*.test.mjs && node test/smoke.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@pdf-lib/fontkit": "1.1.1",
+    "exceljs": "4.4.0",
+    "pdf-lib": "1.17.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.0",
+    "esbuild": "^0.25.0",
+    "typescript": "~6.0.2"
+  }
+}
